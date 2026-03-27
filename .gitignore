@@ -26,3 +26,10 @@ Thumbs.db
 # Electron
 *.crx
 *.pem
+
+# Duplicate files
+main.cjs
+src/main.js
+src/styles.css
+vite.config.js
+package-lock.json

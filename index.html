@@ -4,32 +4,25 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WYSIWYG HTML Editor</title>
+  <link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/47.6.1/ckeditor5.css" crossorigin>
   <link rel="stylesheet" href="src/style.css">
 </head>
 <body>
-  <div class="container">
-    <header class="toolbar">
-      <h1>WYSIWYG HTML Editor</h1>
-      <div class="toolbar-actions">
-        <button id="new-file">Nouveau</button>
-        <button id="open-file">Ouvrir</button>
-        <button id="save-file">Enregistrer</button>
-        <button id="save-file-as">Enregistrer sous</button>
+  <div class="main-container">
+    <div class="editor-container editor-container_document-editor editor-container_include-style editor-container_include-fullscreen">
+      <div class="editor-container__menu-bar" id="editor-menu-bar"></div>
+      <div class="editor-container__toolbar" id="editor-toolbar"></div>
+      <div class="editor-container__editor-wrapper">
+        <div class="editor-container__editor">
+          <div id="editor"></div>
+        </div>
       </div>
-      <div class="current-file-path" id="current-file-path">Aucun fichier ouvert</div>
-    </header>
-    
-    <main class="editor-container">
-      <div id="editor">
-        <h2>Bienvenue dans votre éditeur WYSIWYG ! 🎉</h2>
-        <p>Vous avez créé avec succès un projet CKEditor 5.</p>
-        <p>Commencez à taper pour créer votre contenu !</p>
-      </div>
-    </main>
+    </div>
   </div>
 
   <!-- Load CKEditor 5 from CDN -->
-  <script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+  <script src="https://cdn.ckeditor.com/ckeditor5/47.6.1/ckeditor5.umd.js" crossorigin></script>
+  <script src="https://cdn.ckeditor.com/ckeditor5/47.6.1/translations/fr.umd.js" crossorigin></script>
   
   <!-- Load editor initialization script -->
   <script src="src/editor.js"></script>

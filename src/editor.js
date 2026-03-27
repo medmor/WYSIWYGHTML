@@ -1,144 +1,341 @@
 /**
- * WYSIWYG HTML Editor - CKEditor 5 Integration
- * Uses CKEditor 5 Classic Editor with Essentials plugin
+ * This configuration was generated using the CKEditor 5 Builder. You can modify it anytime using this link:
+ * https://ckeditor.com/ckeditor-5/builder/#installation/NoDgNARATAdAjHeFIFYoGYDsWCcUFQo4BsxADCCmcVGVDgCxzZnoOMpwcMMrHIQAZgCdk6MMDhgpM6WDIBdSAFN0AIxC8cEBUA==
  */
 
-// CKEditor 5 CDN script is loaded via index.html
-// This script runs after the CDN script loads
+const {
+	DecoupledEditor,
+	Autosave,
+	Essentials,
+	Paragraph,
+	Autoformat,
+	TextTransformation,
+	Mention,
+	ImageUtils,
+	ImageEditing,
+	ImageBlock,
+	ImageToolbar,
+	ImageInline,
+	ImageInsertViaUrl,
+	AutoImage,
+	CloudServices,
+	ImageUpload,
+	ImageStyle,
+	ImageCaption,
+	ImageTextAlternative,
+	Emoji,
+	Fullscreen,
+	MediaEmbed,
+	Markdown,
+	PasteFromMarkdownExperimental,
+	Bold,
+	Italic,
+	Underline,
+	Strikethrough,
+	Code,
+	Subscript,
+	Superscript,
+	FontBackgroundColor,
+	FontColor,
+	FontFamily,
+	FontSize,
+	Highlight,
+	Heading,
+	Link,
+	AutoLink,
+	BlockQuote,
+	HorizontalLine,
+	CodeBlock,
+	Indent,
+	IndentBlock,
+	Alignment,
+	Style,
+	GeneralHtmlSupport,
+	List,
+	TodoList,
+	Table,
+	TableToolbar,
+	PlainTableOutput,
+	TableCaption,
+	ShowBlocks,
+	HtmlComment,
+	TextPartLanguage,
+	Title,
+	BalloonToolbar,
+	BlockToolbar
+} = window.CKEDITOR;
 
-document.addEventListener('DOMContentLoaded', () => {
-  // Wait for CKEditor to be available
-  const checkEditor = () => {
-    if (typeof ClassicEditor !== 'undefined') {
-      initializeEditor();
-    } else {
-      setTimeout(checkEditor, 100);
-    }
-  };
-  
-  checkEditor();
+const LICENSE_KEY =
+	'eyJhbGciOiJFUzI1NiJ9.eyJleHAiOjE3NzU3NzkxOTksImp0aSI6IjViZTE1ZTE5LTg4ZTMtNDhkZS1hZTA3LTQwYWY4NzQwZDVkMSIsInVzYWdlRW5kcG9pbnQiOiJodHRwczovL3Byb3h5LWV2ZW50LmNrZWRpdG9yLmNvbSIsImRpc3RyaWJ1dGlvbkNoYW5uZWwiOlsiY2xvdWQiLCJkcnVwYWwiLCJzaCJdLCJ3aGl0ZUxhYmVsIjp0cnVlLCJsaWNlbnNlVHlwZSI6InRyaWFsIiwiZmVhdHVyZXMiOlsiKiJdLCJ2YyI6ImI2YmNlNTBmIn0.aMIFTlFgr034oIP2qERovxq9HqHIwWix6NIkrDGKZJhx3NpyzFj6IXf8IZV9ButHksT2nyYZmr4Hz3oEOaW6vA';
+
+const editorConfig = {
+	toolbar: {
+		items: [
+			'undo',
+			'redo',
+			'|',
+			'showBlocks',
+			'|',
+			'heading',
+			'style',
+			'|',
+			'fontSize',
+			'fontFamily',
+			'fontColor',
+			'fontBackgroundColor',
+			'|',
+			'bold',
+			'italic',
+			'underline',
+			'|',
+			'link',
+			'insertTable',
+			'highlight',
+			'blockQuote',
+			'codeBlock',
+			'|',
+			'alignment',
+			'|',
+			'bulletedList',
+			'numberedList',
+			'todoList',
+			'outdent',
+			'indent'
+		],
+		shouldNotGroupWhenFull: false
+	},
+	plugins: [
+		Alignment,
+		Autoformat,
+		AutoImage,
+		AutoLink,
+		Autosave,
+		BalloonToolbar,
+		BlockQuote,
+		BlockToolbar,
+		Bold,
+		CloudServices,
+		Code,
+		CodeBlock,
+		Emoji,
+		Essentials,
+		FontBackgroundColor,
+		FontColor,
+		FontFamily,
+		FontSize,
+		Fullscreen,
+		GeneralHtmlSupport,
+		Heading,
+		Highlight,
+		HorizontalLine,
+		HtmlComment,
+		ImageBlock,
+		ImageCaption,
+		ImageEditing,
+		ImageInline,
+		ImageInsertViaUrl,
+		ImageStyle,
+		ImageTextAlternative,
+		ImageToolbar,
+		ImageUpload,
+		ImageUtils,
+		Indent,
+		IndentBlock,
+		Italic,
+		Link,
+		List,
+		Markdown,
+		MediaEmbed,
+		Mention,
+		Paragraph,
+		PasteFromMarkdownExperimental,
+		PlainTableOutput,
+		ShowBlocks,
+		Strikethrough,
+		Style,
+		Subscript,
+		Superscript,
+		Table,
+		TableCaption,
+		TableToolbar,
+		TextPartLanguage,
+		TextTransformation,
+		Title,
+		TodoList,
+		Underline
+	],
+	balloonToolbar: ['bold', 'italic', '|', 'link', '|', 'bulletedList', 'numberedList'],
+	blockToolbar: [
+		'fontSize',
+		'fontColor',
+		'fontBackgroundColor',
+		'|',
+		'bold',
+		'italic',
+		'|',
+		'link',
+		'insertTable',
+		'|',
+		'bulletedList',
+		'numberedList',
+		'outdent',
+		'indent'
+	],
+	fontFamily: {
+		supportAllValues: true
+	},
+	fontSize: {
+		options: [10, 12, 14, 'default', 18, 20, 22],
+		supportAllValues: true
+	},
+	fullscreen: {
+		onEnterCallback: container =>
+			container.classList.add(
+				'editor-container',
+				'editor-container_document-editor',
+				'editor-container_include-style',
+				'editor-container_include-fullscreen',
+				'main-container'
+			)
+	},
+	heading: {
+		options: [
+			{
+				model: 'paragraph',
+				title: 'Paragraph',
+				class: 'ck-heading_paragraph'
+			},
+			{
+				model: 'heading1',
+				view: 'h1',
+				title: 'Heading 1',
+				class: 'ck-heading_heading1'
+			},
+			{
+				model: 'heading2',
+				view: 'h2',
+				title: 'Heading 2',
+				class: 'ck-heading_heading2'
+			},
+			{
+				model: 'heading3',
+				view: 'h3',
+				title: 'Heading 3',
+				class: 'ck-heading_heading3'
+			},
+			{
+				model: 'heading4',
+				view: 'h4',
+				title: 'Heading 4',
+				class: 'ck-heading_heading4'
+			},
+			{
+				model: 'heading5',
+				view: 'h5',
+				title: 'Heading 5',
+				class: 'ck-heading_heading5'
+			},
+			{
+				model: 'heading6',
+				view: 'h6',
+				title: 'Heading 6',
+				class: 'ck-heading_heading6'
+			}
+		]
+	},
+	htmlSupport: {
+		allow: [
+			{
+				name: /^.*$/,
+				styles: true,
+				attributes: true,
+				classes: true
+			}
+		]
+	},
+	image: {
+		toolbar: ['toggleImageCaption', 'imageTextAlternative', '|', 'imageStyle:inline', 'imageStyle:wrapText', 'imageStyle:breakText']
+	},
+	initialData:
+		'<h2>Congratulations on setting up CKEditor 5! 🎉</h2>\n<p>\n\tYou\'ve successfully created a CKEditor 5 project. This powerful text editor\n\twill enhance your application, enabling rich text editing capabilities that\n\tare customizable and easy to use.\n</p>\n<h3>What\'s next?</h3>\n<ol>\n\t<li>\n\t\t<strong>Integrate into your app</strong>: time to bring the editing into\n\t\tyour application. Take the code you created and add to your application.\n\t</li>\n\t<li>\n\t\t<strong>Explore features:</strong> Experiment with different plugins and\n\t\ttoolbar options to discover what works best for your needs.\n\t</li>\n\t<li>\n\t\t<strong>Customize your editor:</strong> Tailor the editor\'s\n\t\tconfiguration to match your application\'s style and requirements. Or\n\t\teven write your plugin!\n\t</li>\n</ol>\n<p>\n\tKeep experimenting, and don\'t hesitate to push the boundaries of what you\n\tcan achieve with CKEditor 5. Your feedback is invaluable to us as we strive\n\tto improve and evolve. Happy editing!\n</p>\n<h3>Helpful resources</h3>\n<ul>\n\t<li>📝 <a href="https://portal.ckeditor.com/checkout?plan=free">Trial sign up</a>,</li>\n\t<li>📕 <a href="https://ckeditor.com/docs/ckeditor5/latest/installation/index.html">Documentation</a>,</li>\n\t<li>⭐️ <a href="https://github.com/ckeditor/ckeditor5">GitHub</a> (star us if you can!),</li>\n\t<li>🏠 <a href="https://ckeditor.com">CKEditor Homepage</a>,</li>\n\t<li>🧑‍💻 <a href="https://ckeditor.com/ckeditor-5/demo/">CKEditor 5 Demos</a>,</li>\n</ul>\n<h3>Need help?</h3>\n<p>\n\tSee this text, but the editor is not starting up? Check the browser\'s\n\tconsole for clues and guidance. It may be related to an incorrect license\n\tkey if you use premium features or another feature-related requirement. If\n\tyou cannot make it work, file a GitHub issue, and we will help as soon as\n\tpossible!\n</p>\n',
+	language: 'fr',
+	licenseKey: LICENSE_KEY,
+	link: {
+		addTargetToExternalLinks: true,
+		defaultProtocol: 'https://',
+		decorators: {
+			toggleDownloadable: {
+				mode: 'manual',
+				label: 'Downloadable',
+				attributes: {
+					download: 'file'
+				}
+			}
+		}
+	},
+	mention: {
+		feeds: [
+			{
+				marker: '@',
+				feed: [
+					/* See: https://ckeditor.com/docs/ckeditor5/latest/features/mentions.html */
+				]
+			}
+		]
+	},
+	placeholder: 'Type or paste your content here!',
+	style: {
+		definitions: [
+			{
+				name: 'Article category',
+				element: 'h3',
+				classes: ['category']
+			},
+			{
+				name: 'Title',
+				element: 'h2',
+				classes: ['document-title']
+			},
+			{
+				name: 'Subtitle',
+				element: 'h3',
+				classes: ['document-subtitle']
+			},
+			{
+				name: 'Info box',
+				element: 'p',
+				classes: ['info-box']
+			},
+			{
+				name: 'CTA Link Primary',
+				element: 'a',
+				classes: ['button', 'button--green']
+			},
+			{
+				name: 'CTA Link Secondary',
+				element: 'a',
+				classes: ['button', 'button--black']
+			},
+			{
+				name: 'Marker',
+				element: 'span',
+				classes: ['marker']
+			},
+			{
+				name: 'Spoiler',
+				element: 'span',
+				classes: ['spoiler']
+			}
+		]
+	},
+	table: {
+		contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells']
+	}
+};
+
+DecoupledEditor.create(document.querySelector('#editor'), editorConfig).then(editor => {
+	document.querySelector('#editor-toolbar').appendChild(editor.ui.view.toolbar.element);
+	document.querySelector('#editor-menu-bar').appendChild(editor.ui.view.menuBarView.element);
+
+	return editor;
 });
-
-function initializeEditor() {
-  const editorElement = document.querySelector('#editor');
-  
-  // Initialize CKEditor 5 - use the built-in plugins array from ClassicEditor
-  ClassicEditor
-    .create(editorElement, {
-      toolbar: [
-        'heading',
-        '|',
-        'bold',
-        'italic',
-        'link',
-        'bulletedList',
-        'numberedList',
-        '|',
-        'undo',
-        'redo'
-      ],
-      licenseKey: 'GPL'
-    })
-    .then(editor => {
-      console.log('Editor initialized successfully!');
-      window.editor = editor;
-      
-      // Expose editor methods to global scope for buttons
-      setupButtonHandlers();
-    })
-    .catch(error => {
-      console.error('Editor initialization failed:', error);
-    });
-}
-
-// Button handlers
-function setupButtonHandlers() {
-  // New file button
-  document.getElementById('new-file')?.addEventListener('click', () => {
-    if (window.editor) {
-      window.editor.setData('');
-      currentFilePath = null;
-      updateFilePathDisplay(null);
-      console.log('New file created');
-    }
-  });
-  
-  // Open file button
-  document.getElementById('open-file')?.addEventListener('click', () => {
-    const { ipcRenderer } = require('electron');
-    ipcRenderer.send('open-file');
-    
-    ipcRenderer.once('file-opened', (event, result) => {
-      if (result.success) {
-        if (window.editor) {
-          window.editor.setData(result.content);
-          updateFilePathDisplay(result.filePath);
-          currentFilePath = result.filePath;
-          console.log('File opened:', result.filePath);
-        }
-      } else {
-        alert('Error opening file: ' + result.error);
-      }
-    });
-  });
-  
-  // Save file button
-  document.getElementById('save-file')?.addEventListener('click', () => {
-    if (!window.editor) return;
-    
-    const content = window.editor.getData();
-    const { ipcRenderer } = require('electron');
-    
-    if (currentFilePath) {
-      // Save to existing file
-      ipcRenderer.send('save-file', content);
-      
-      ipcRenderer.once('file-saved', (event, result) => {
-        if (result.success) {
-          updateFilePathDisplay(result.filePath);
-          console.log('File saved:', result.filePath);
-          alert('File saved successfully!');
-        } else {
-          alert('Error saving file: ' + result.error);
-        }
-      });
-    } else {
-      // No file open, prompt for save location
-      saveAs();
-    }
-  });
-  
-  // Save As button
-  function saveAs() {
-    if (!window.editor) return;
-    
-    const content = window.editor.getData();
-    const { ipcRenderer } = require('electron');
-    
-    ipcRenderer.send('save-file', content);
-    
-    ipcRenderer.once('file-saved', (event, result) => {
-      if (result.success) {
-        currentFilePath = result.filePath;
-        updateFilePathDisplay(result.filePath);
-        console.log('File saved as:', result.filePath);
-        alert('File saved successfully!');
-      } else {
-        alert('Error saving file: ' + result.error);
-      }
-    });
-  }
-  
-  document.getElementById('save-file-as')?.addEventListener('click', saveAs);
-}
-
-// Update file path display
-function updateFilePathDisplay(filePath) {
-  const pathElement = document.getElementById('current-file-path');
-  if (pathElement) {
-    pathElement.textContent = filePath ? 'Opened: ' + filePath : 'No file open';
-  }
-}
-
-// Store current file path
-let currentFilePath = null;

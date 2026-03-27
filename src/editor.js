@@ -337,5 +337,51 @@ DecoupledEditor.create(document.querySelector('#editor'), editorConfig).then(edi
 	document.querySelector('#editor-toolbar').appendChild(editor.ui.view.toolbar.element);
 	document.querySelector('#editor-menu-bar').appendChild(editor.ui.view.menuBarView.element);
 
+	// Store editor instance for global access
+	window.currentEditor = editor;
+
+	// Setup button event listeners
+	setupButtonListeners();
+
 	return editor;
 });
+
+// Setup button event listeners
+function setupButtonListeners() {
+	// New file button
+	document.getElementById('new-file').addEventListener('click', () => {
+		if (window.currentEditor) {
+			window.currentEditor.data.set('<h2>Nouveau document</h2>\n<p>Commencez à taper votre contenu ici...</p>');
+		}
+		document.getElementById('current-file-path').textContent = 'Nouveau document';
+		window.currentFilePath = null;
+	});
+
+	// Open file button
+	document.getElementById('open-file').addEventListener('click', () => {
+		window.ipcRenderer.send('open-file');
+	});
+
+	// Save file button
+	document.getElementById('save-file').addEventListener('click', () => {
+		if (window.currentEditor) {
+			const content = window.currentEditor.data.get();
+			if (window.currentFilePath) {
+				window.ipcRenderer.send('save-file', content);
+			} else {
+				window.ipcRenderer.send('save-file-as', content);
+			}
+		}
+	});
+
+	// Save as button
+	document.getElementById('save-file-as').addEventListener('click', () => {
+		if (window.currentEditor) {
+			const content = window.currentEditor.data.get();
+			window.ipcRenderer.send('save-file-as', content);
+		}
+	});
+}
+
+// Global variable to track current file path
+window.currentFilePath = null;

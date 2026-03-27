@@ -6,8 +6,33 @@
   <title>WYSIWYG HTML Editor</title>
   <link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/47.6.1/ckeditor5.css" crossorigin>
   <link rel="stylesheet" href="src/style.css">
+  <style>
+    .file-buttons {
+      padding: 10px;
+      display: flex;
+      gap: 10px;
+      background-color: #f5f5f5;
+      border-bottom: 1px solid #ddd;
+    }
+    .file-buttons button {
+      padding: 8px 16px;
+      cursor: pointer;
+    }
+    .file-buttons span {
+      align-self: center;
+      color: #666;
+    }
+  </style>
 </head>
 <body>
+  <div class="file-buttons">
+    <button id="new-file">Nouveau</button>
+    <button id="open-file">Ouvrir</button>
+    <button id="save-file">Enregistrer</button>
+    <button id="save-file-as">Enregistrer sous</button>
+    <span id="current-file-path">...</span>
+  </div>
+
   <div class="main-container">
     <div class="editor-container editor-container_document-editor editor-container_include-style editor-container_include-fullscreen">
       <div class="editor-container__menu-bar" id="editor-menu-bar"></div>
@@ -26,5 +51,62 @@
   
   <!-- Load editor initialization script -->
   <script src="src/editor.js"></script>
+  
+  <!-- Setup IPC for file operations -->
+  <script>
+    const { ipcRenderer } = require('electron');
+    
+    // Make ipcRenderer available globally
+    window.ipcRenderer = ipcRenderer;
+    
+    // Handle file opened event
+    ipcRenderer.on('file-opened', (event, { success, content, filePath, error }) => {
+      if (success) {
+        if (window.currentEditor) {
+          window.currentEditor.data.set(content);
+        }
+        document.getElementById('current-file-path').textContent = filePath;
+        window.currentFilePath = filePath;
+      } else {
+        alert('Erreur lors de l\'ouverture du fichier: ' + error);
+      }
+    });
+    
+    // Handle file saved event
+    ipcRenderer.on('file-saved', (event, { success, filePath, error }) => {
+      if (success) {
+        document.getElementById('current-file-path').textContent = filePath;
+        window.currentFilePath = filePath;
+        alert('Fichier enregistré avec succès: ' + filePath);
+      } else {
+        alert('Erreur lors de l\'enregistrement: ' + error);
+      }
+    });
+    
+    // Handle save as event
+    ipcRenderer.on('save-file-as', (event, content) => {
+      const dialog = require('electron').dialog;
+      const fs = require('fs');
+      
+      dialog.showSaveDialog({
+        filters: [
+          { name: 'Fichiers HTML', extensions: ['html', 'htm'] },
+          { name: 'Tous les fichiers', extensions: ['*'] }
+        ]
+      }).then(result => {
+        if (!result.canceled && result.filePath) {
+          fs.writeFile(result.filePath, content, 'utf8', (err) => {
+            if (err) {
+              alert('Erreur lors de l\'enregistrement: ' + err.message);
+              return;
+            }
+            window.currentFilePath = result.filePath;
+            document.getElementById('current-file-path').textContent = result.filePath;
+            alert('Fichier enregistré avec succès: ' + result.filePath);
+          });
+        }
+      });
+    });
+  </script>
 </body>
 </html>

@@ -92,3 +92,23 @@ ipcMain.on('save-file', (event, content) => {
     });
   }
 });
+
+ipcMain.on('save-file-as', (event, content) => {
+  dialog.showSaveDialog(mainWindow, {
+    filters: [
+      { name: 'HTML Files', extensions: ['html', 'htm'] },
+      { name: 'All Files', extensions: ['*'] }
+    ]
+  }).then(result => {
+    if (!result.canceled && result.filePath) {
+      currentFilePath = result.filePath;
+      fs.writeFile(result.filePath, content, 'utf8', (err) => {
+        if (err) {
+          event.sender.send('file-saved', { success: false, error: err.message });
+          return;
+        }
+        event.sender.send('file-saved', { success: true, filePath: result.filePath });
+      });
+    }
+  });
+});

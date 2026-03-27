@@ -1,0 +1,23 @@
+{
+  "name": "wysiwyghtml",
+  "version": "1.0.0",
+  "description": "WYSIWYG HTML Editor built with Electron and CKEditor 5",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron . --no-sandbox",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "electron",
+    "wysiwyg",
+    "ckeditor"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^28.0.0"
+  },
+  "dependencies": {
+    "ckeditor5": "^41.0.0"
+  }
+}

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WYSIWYG HTML Editor</title>
+  <link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+  <div class="container">
+    <header class="toolbar">
+      <h1>WYSIWYG HTML Editor</h1>
+      <div class="toolbar-actions">
+        <button id="new-file">Nouveau</button>
+        <button id="open-file">Ouvrir</button>
+        <button id="save-file">Enregistrer</button>
+        <button id="save-file-as">Enregistrer sous</button>
+      </div>
+      <div class="current-file-path" id="current-file-path">Aucun fichier ouvert</div>
+    </header>
+    
+    <main class="editor-container">
+      <div id="editor">
+        <h2>Bienvenue dans votre éditeur WYSIWYG ! 🎉</h2>
+        <p>Vous avez créé avec succès un projet CKEditor 5.</p>
+        <p>Commencez à taper pour créer votre contenu !</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- Load CKEditor 5 from CDN -->
+  <script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+  
+  <!-- Load editor initialization script -->
+  <script src="src/editor.js"></script>
+</body>
+</html>

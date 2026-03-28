@@ -385,3 +385,33 @@ function setupButtonListeners() {
 
 // Global variable to track current file path
 window.currentFilePath = null;
+
+// AI Sidebar toggle functionality
+function setupAISidebarToggle() {
+	const toggleBtn = document.getElementById('toggle-ai-sidebar');
+	const closeBtn = document.getElementById('ai-sidebar-close');
+	const sidebar = document.getElementById('ai-sidebar');
+
+	if (toggleBtn) {
+		toggleBtn.addEventListener('click', () => {
+			sidebar.classList.toggle('hidden');
+			if (!sidebar.classList.contains('hidden')) {
+				// Initialize AI features when sidebar is opened for the first time
+				if (window.aiFeatures) {
+					window.aiFeatures.initialize();
+				}
+			}
+		});
+	}
+
+	if (closeBtn) {
+		closeBtn.addEventListener('click', () => {
+			sidebar.classList.add('hidden');
+		});
+	}
+}
+
+// Call AI sidebar setup after DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+	setupAISidebarToggle();
+});

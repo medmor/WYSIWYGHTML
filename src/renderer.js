@@ -59,17 +59,17 @@ import {
 	PlainTableOutput,
 	ShowBlocks,
 	HtmlComment,
-	TextPartLanguage,
-	Title,
 	BalloonToolbar,
 	BlockToolbar
 } from 'ckeditor5';
 
 import translations from 'ckeditor5/translations/fr.js';
-
 import 'ckeditor5/ckeditor5.css';
-
 import './style.css';
+
+// AI Integration imports
+import { checkOllamaConnection, getAvailableModels } from './ollamaClient.js';
+import { AIFeatures } from './aiFeatures.js';
 
 const LICENSE_KEY =
 	'eyJhbGciOiJFUzI1NiJ9.eyJleHAiOjE3NzU3NzkxOTksImp0aSI6IjViZTE1ZTE5LTg4ZTMtNDhkZS1hZTA3LTQwYWY4NzQwZDVkMSIsInVzYWdlRW5kcG9pbnQiOiJodHRwczovL3Byb3h5LWV2ZW50LmNrZWRpdG9yLmNvbSIsImRpc3RyaWJ1dGlvbkNoYW5uZWwiOlsiY2xvdWQiLCJkcnVwYWwiLCJzaCJdLCJ3aGl0ZUxhYmVsIjp0cnVlLCJsaWNlbnNlVHlwZSI6InRyaWFsIiwiZmVhdHVyZXMiOlsiKiJdLCJ2YyI6ImI2YmNlNTBmIn0.aMIFTlFgr034oIP2qERovxq9HqHIwWix6NIkrDGKZJhx3NpyzFj6IXf8IZV9ButHksT2nyYZmr4Hz3oEOaW6vA';
@@ -81,7 +81,6 @@ const editorConfig = {
 			'redo',
 			'|',
 			'showBlocks',
-			'textPartLanguage',
 			'fullscreen',
 			'|',
 			'heading',
@@ -173,9 +172,7 @@ const editorConfig = {
 		Table,
 		TableCaption,
 		TableToolbar,
-		TextPartLanguage,
 		TextTransformation,
-		Title,
 		TodoList,
 		Underline
 	],
@@ -361,6 +358,9 @@ DecoupledEditor.create(document.querySelector('#editor'), editorConfig)
 
 		// Setup button click handlers for file operations
 		setupFileButtons(editor);
+
+		// Initialize AI Features
+		initializeAIFeatures(editor);
 	})
 	.catch(error => {
 		console.error('CKEditor 5 initialization error:', error);
@@ -395,4 +395,96 @@ function setupFileButtons(editor) {
 		const content = editor.data.get();
 		ipcRenderer.send('save-file-as', content);
 	});
+
+	// Zoom controls
+	let currentZoom = 100;
+	const minZoom = 25;
+	const maxZoom = 200;
+	const zoomStep = 10;
+	const editorContainer = document.querySelector('.editor-container__editor');
+	const zoomLevelSpan = document.getElementById('zoom-level');
+
+	function updateZoom() {
+		if (editorContainer) {
+			editorContainer.style.transform = `scale(${currentZoom / 100})`;
+			editorContainer.style.transformOrigin = 'top center';
+		}
+		if (zoomLevelSpan) {
+			zoomLevelSpan.textContent = `${currentZoom}%`;
+		}
+	}
+
+	document.getElementById('zoom-in').addEventListener('click', () => {
+		if (currentZoom < maxZoom) {
+			currentZoom = Math.min(currentZoom + zoomStep, maxZoom);
+			updateZoom();
+		}
+	});
+
+	document.getElementById('zoom-out').addEventListener('click', () => {
+		if (currentZoom > minZoom) {
+			currentZoom = Math.max(currentZoom - zoomStep, minZoom);
+			updateZoom();
+		}
+	});
+
+	document.getElementById('zoom-reset').addEventListener('click', () => {
+		currentZoom = 100;
+		updateZoom();
+	});
+}
+
+/**
+ * Initialize AI Features integration
+ */
+async function initializeAIFeatures(editor) {
+	const statusElement = document.getElementById('ai-status');
+	const modelSelect = document.getElementById('ai-model');
+
+	// Check Ollama connection and populate models
+	try {
+		const isConnected = await checkOllamaConnection();
+		if (isConnected && statusElement) {
+			statusElement.textContent = 'Connecté';
+			statusElement.className = 'ai-status connected';
+
+			// Get available models
+			const models = await getAvailableModels();
+			console.log('Available models:', models);
+			
+			if (modelSelect) {
+				if (models.length > 0) {
+					modelSelect.innerHTML = models.map(model => 
+						`<option value="${model}">${model}</option>`
+					).join('');
+				} else {
+					// No models found - show message
+					modelSelect.innerHTML = '<option value="">Aucun modèle trouvé</option>';
+					console.warn('No Ollama models found. Make sure to pull a model: ollama pull llama3');
+				}
+			}
+		} else if (statusElement) {
+			statusElement.textContent = 'Déconnecté';
+			statusElement.className = 'ai-status disconnected';
+			if (modelSelect) {
+				modelSelect.innerHTML = '<option value="">Ollama non disponible</option>';
+			}
+		}
+	} catch (error) {
+		console.warn('Ollama connection failed:', error.message);
+		if (statusElement) {
+			statusElement.textContent = 'Déconnecté';
+			statusElement.className = 'ai-status disconnected';
+		}
+		if (modelSelect) {
+			modelSelect.innerHTML = '<option value="">Erreur de connexion</option>';
+		}
+	}
+
+	// Initialize AI Features class
+	const aiFeatures = new AIFeatures(editor);
+	aiFeatures.initialize();
+
+	// Make AI features available globally
+	window.aiFeatures = aiFeatures;
 }

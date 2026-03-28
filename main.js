@@ -10,7 +10,8 @@ function createWindow() {
     height: 800,
     webPreferences: {
       nodeIntegration: true,
-      contextIsolation: false
+      contextIsolation: false,
+      spellcheck: true
     },
     backgroundColor: '#ffffff',
     autoHideMenuBar: true
@@ -26,6 +27,10 @@ function createWindow() {
 
 app.whenReady().then(() => {
   createWindow();
+  
+  // Set spell check languages (French and English)
+  const { session } = require('electron');
+  session.defaultSession.setSpellCheckerLanguages(['fr', 'en-US']);
   
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

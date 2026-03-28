@@ -23,6 +23,23 @@
       align-self: center;
       color: #666;
     }
+    .zoom-controls {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-left: 15px;
+    }
+    .zoom-controls button {
+      padding: 4px 10px;
+      min-width: 30px;
+      font-size: 14px;
+    }
+    #zoom-level {
+      min-width: 45px;
+      text-align: center;
+      font-size: 12px;
+      color: #333;
+    }
   </style>
 </head>
 <body>
@@ -32,9 +49,73 @@
     <button id="save-file">Enregistrer</button>
     <button id="save-file-as">Enregistrer sous</button>
     <span id="current-file-path">...</span>
+    <div class="zoom-controls">
+      <button id="zoom-out" title="Zoom arrière">−</button>
+      <span id="zoom-level">100%</span>
+      <button id="zoom-in" title="Zoom avant">+</button>
+      <button id="zoom-reset" title="Réinitialiser le zoom">⟲</button>
+    </div>
+    <button id="toggle-ai-sidebar" style="margin-left: auto;">🤖 AI</button>
   </div>
 
-  <div class="main-container">
+  <div class="app-container">
+    <!-- AI Sidebar -->
+    <div class="ai-sidebar" id="ai-sidebar">
+      <div class="ai-sidebar-header">
+        <h3>🤖 AI Assistant</h3>
+        <button class="ai-close-btn" id="ai-close-btn">×</button>
+      </div>
+      
+      <div class="ai-sidebar-content">
+        <!-- Connection Status -->
+        <div class="ai-status">
+          <span class="status-indicator" id="ai-status-indicator">●</span>
+          <span id="ai-status-text">Vérification de la connexion...</span>
+        </div>
+        
+        <!-- Model Selection -->
+        <div class="ai-control">
+          <label for="ai-model">Modèle:</label>
+          <select id="ai-model" disabled>
+            <option value="">Chargement...</option>
+          </select>
+        </div>
+        
+        <!-- Prompt Input -->
+        <div class="ai-control">
+          <label for="ai-prompt">Prompt:</label>
+          <textarea id="ai-prompt" rows="4" placeholder="Décrivez ce que vous voulez générer..."></textarea>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="ai-actions">
+          <button id="ai-generate" class="ai-btn ai-btn-primary" disabled>
+            ✨ Générer
+          </button>
+          <button id="ai-fix-grammar" class="ai-btn" disabled>
+            📝 Corriger
+          </button>
+          <button id="ai-complete" class="ai-btn" disabled>
+            💡 Compléter
+          </button>
+        </div>
+        
+        <!-- Output Area -->
+        <div class="ai-output">
+          <label>Résultat:</label>
+          <div class="ai-output-content" id="ai-output">
+            <p class="ai-placeholder">Le résultat apparaîtra ici...</p>
+          </div>
+        </div>
+        
+        <!-- Insert Button -->
+        <button id="ai-insert" class="ai-btn ai-btn-success" disabled>
+          📥 Insérer dans l'éditeur
+        </button>
+      </div>
+    </div>
+
+    <div class="main-container">
     <div class="editor-container editor-container_document-editor editor-container_include-style editor-container_include-fullscreen">
       <div class="editor-container__menu-bar" id="editor-menu-bar"></div>
       <div class="editor-container__toolbar" id="editor-toolbar"></div>

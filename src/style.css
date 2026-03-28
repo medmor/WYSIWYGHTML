@@ -15,6 +15,183 @@
 	--ck-editor-height: 100vh;
 }
 
+/* CKEditor Dark Mode - follows DaisyUI dark theme */
+[data-theme="dark"] {
+	/* Editor UI colors */
+	--ck-color-base-foreground: hsl(0, 0%, 12%);
+	--ck-color-base-background: hsl(0, 0%, 15%);
+	--ck-color-base-border: hsl(0, 0%, 25%);
+	--ck-color-base-text: hsl(0, 0%, 90%);
+	--ck-color-base-active: hsl(210, 100%, 50%);
+	--ck-color-base-active-focus: hsl(210, 100%, 60%);
+	--ck-color-base-error: hsl(0, 100%, 60%);
+	
+	/* Toolbar colors */
+	--ck-color-toolbar-background: hsl(0, 0%, 15%);
+	--ck-color-toolbar-border: hsl(0, 0%, 25%);
+	
+	/* Dropdown and panel colors */
+	--ck-color-dropdown-panel-background: hsl(0, 0%, 15%);
+	--ck-color-dropdown-panel-border: hsl(0, 0%, 25%);
+	--ck-color-list-background: hsl(0, 0%, 15%);
+	--ck-color-list-button-hover-background: hsl(0, 0%, 22%);
+	--ck-color-list-button-on-background: hsl(0, 0%, 20%);
+	
+	/* Button colors */
+	--ck-color-button-default-background: transparent;
+	--ck-color-button-default-hover-background: hsl(0, 0%, 22%);
+	--ck-color-button-default-active-background: hsl(0, 0%, 25%);
+	--ck-color-button-on-background: hsl(0, 0%, 20%);
+	--ck-color-button-on-hover-background: hsl(0, 0%, 25%);
+	--ck-color-button-on-active-background: hsl(0, 0%, 28%);
+	
+	/* Input colors */
+	--ck-color-input-background: hsl(0, 0%, 18%);
+	--ck-color-input-border: hsl(0, 0%, 30%);
+	--ck-color-input-text: hsl(0, 0%, 90%);
+	--ck-color-input-disabled-background: hsl(0, 0%, 12%);
+	--ck-color-input-disabled-border: hsl(0, 0%, 20%);
+	--ck-color-input-disabled-text: hsl(0, 0%, 50%);
+	
+	/* Focus colors */
+	--ck-color-focus-border: hsl(210, 100%, 60%);
+	--ck-color-focus-outer-shadow: hsla(210, 100%, 60%, 0.3);
+	--ck-color-focus-disabled-border: hsl(0, 0%, 30%);
+	
+	/* Tooltip colors */
+	--ck-color-tooltip-background: hsl(0, 0%, 20%);
+	--ck-color-tooltip-text: hsl(0, 0%, 90%);
+	
+	/* Editor editable area */
+	--ck-color-editor-background: hsl(0, 0%, 12%);
+	--ck-color-editor-border: hsl(0, 0%, 25%);
+	
+	/* Disabled colors */
+	--ck-color-disabled-background: hsl(0, 0%, 12%);
+	--ck-color-disabled-border: hsl(0, 0%, 20%);
+	--ck-color-disabled-text: hsl(0, 0%, 45%);
+	
+	/* Selection */
+	--ck-color-selection-background: hsla(210, 100%, 50%, 0.3);
+	--ck-color-selection-text: hsl(0, 0%, 100%);
+}
+
+/* Dark mode editor container */
+[data-theme="dark"] .editor-container_document-editor {
+	border-color: hsl(0, 0%, 25%);
+}
+
+[data-theme="dark"] .editor-container_document-editor .editor-container__editor-wrapper {
+	background: hsl(0, 0%, 12%);
+}
+
+/* Dark mode editable area - paper-like appearance */
+[data-theme="dark"] .editor-container_document-editor .editor-container__editor .ck.ck-editor__editable {
+	background: hsl(0, 0%, 14%);
+	border-color: hsl(0, 0%, 30%);
+	color: hsl(0, 0%, 90%);
+}
+
+/* Dark mode toolbar */
+[data-theme="dark"] .ck.ck-toolbar {
+	background: hsl(0, 0%, 15%);
+	border-color: hsl(0, 0%, 25%);
+}
+
+[data-theme="dark"] .ck.ck-toolbar__items {
+	background: transparent;
+}
+
+/* Dark mode menu bar */
+[data-theme="dark"] .ck.ck-menu-bar {
+	background: hsl(0, 0%, 15%);
+	border-color: hsl(0, 0%, 25%);
+}
+
+[data-theme="dark"] .ck.ck-menu-bar__menu__button {
+	color: hsl(0, 0%, 90%);
+}
+
+[data-theme="dark"] .ck.ck-menu-bar__menu__button:hover,
+[data-theme="dark"] .ck.ck-menu-bar__menu__button.ck-on {
+	background: hsl(0, 0%, 22%);
+}
+
+/* Dark mode dropdowns */
+[data-theme="dark"] .ck.ck-dropdown__panel {
+	background: hsl(0, 0%, 15%);
+	border-color: hsl(0, 0%, 25%);
+}
+
+[data-theme="dark"] .ck.ck-list__item {
+	color: hsl(0, 0%, 90%);
+}
+
+[data-theme="dark"] .ck.ck-list__item:hover,
+[data-theme="dark"] .ck.ck-list__item.ck-on {
+	background: hsl(0, 0%, 22%);
+}
+
+/* Dark mode buttons */
+[data-theme="dark"] .ck.ck-button {
+	color: hsl(0, 0%, 90%);
+}
+
+[data-theme="dark"] .ck.ck-button:hover {
+	background: hsl(0, 0%, 22%);
+}
+
+[data-theme="dark"] .ck.ck-button.ck-on {
+	background: hsl(0, 0%, 25%);
+}
+
+/* Dark mode inputs */
+[data-theme="dark"] .ck.ck-input {
+	background: hsl(0, 0%, 18%);
+	border-color: hsl(0, 0%, 30%);
+	color: hsl(0, 0%, 90%);
+}
+
+/* Dark mode dialogs */
+[data-theme="dark"] .ck.ck-dialog {
+	background: hsl(0, 0%, 15%);
+	border-color: hsl(0, 0%, 25%);
+}
+
+/* Dark mode balloons/popups */
+[data-theme="dark"] .ck.ck-balloon-panel {
+	background: hsl(0, 0%, 15%);
+	border-color: hsl(0, 0%, 25%);
+}
+
+/* Dark mode links in content */
+[data-theme="dark"] .ck-content a {
+	color: hsl(210, 100%, 70%);
+}
+
+/* Dark mode headings in content */
+[data-theme="dark"] .ck-content h1,
+[data-theme="dark"] .ck-content h2,
+[data-theme="dark"] .ck-content h3,
+[data-theme="dark"] .ck-content h4,
+[data-theme="dark"] .ck-content h5,
+[data-theme="dark"] .ck-content h6 {
+	color: hsl(0, 0%, 95%);
+}
+
+/* Dark mode blockquotes */
+[data-theme="dark"] .ck-content blockquote {
+	border-left-color: hsl(0, 0%, 40%);
+	color: hsl(0, 0%, 75%);
+}
+
+/* Dark mode code blocks */
+[data-theme="dark"] .ck-content pre,
+[data-theme="dark"] .ck-content code {
+	background: hsl(0, 0%, 18%);
+	color: hsl(0, 0%, 85%);
+}
+
 /* Navbar compact styles */
 .navbar {
 	min-height: 48px;

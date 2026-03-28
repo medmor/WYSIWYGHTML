@@ -405,12 +405,15 @@ function setupFileButtons(editor, navbar) {
 	});
 
 	// Zoom controls
-	let currentZoom = 100;
 	const minZoom = 25;
 	const maxZoom = 200;
 	const zoomStep = 10;
 	const editorContainer = document.querySelector('.editor-container__editor');
 	const zoomLevelSpan = document.getElementById('zoom-level');
+
+	// Load saved zoom from localStorage
+	let currentZoom = parseInt(localStorage.getItem('zoomLevel'), 10) || 100;
+	currentZoom = Math.max(minZoom, Math.min(maxZoom, currentZoom)); // Clamp to valid range
 
 	function updateZoom() {
 		if (editorContainer) {
@@ -420,7 +423,12 @@ function setupFileButtons(editor, navbar) {
 		if (zoomLevelSpan) {
 			zoomLevelSpan.textContent = `${currentZoom}%`;
 		}
+		// Persist zoom level
+		localStorage.setItem('zoomLevel', currentZoom.toString());
 	}
+
+	// Apply initial zoom
+	updateZoom();
 
 	document.getElementById('zoom-in').addEventListener('click', () => {
 		if (currentZoom < maxZoom) {

@@ -12,7 +12,7 @@
 
 :root {
 	--ck-content-font-family: 'Lato';
-	--ck-editor-height: 100vh;
+	--ck-editor-height: calc(100vh - 50px);
 }
 
 /* CKEditor Dark Mode - follows DaisyUI dark theme */

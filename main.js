@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const fs = require('fs');
+const store = require('./store');
 
 let mainWindow;
 let currentFilePath = null;
@@ -26,6 +27,10 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  // Load persisted state
+  store.loadState();
+  currentFilePath = store.get('lastFilePath');
+  
   createWindow();
   
   // Set spell check languages (French and English)
@@ -47,7 +52,9 @@ app.on('window-all-closed', () => {
 
 // IPC handlers for file operations
 ipcMain.on('open-file', (event) => {
+  const defaultPath = store.getLastFileDir() || undefined;
   dialog.showOpenDialog(mainWindow, {
+    defaultPath,
     properties: ['openFile'],
     filters: [
       { name: 'HTML Files', extensions: ['html', 'htm'] },
@@ -62,6 +69,7 @@ ipcMain.on('open-file', (event) => {
           return;
         }
         currentFilePath = filePath;
+        store.set('lastFilePath', filePath);
         event.sender.send('file-opened', { success: true, content: data, filePath: filePath });
       });
     }
@@ -75,10 +83,13 @@ ipcMain.on('save-file', (event, content) => {
         event.sender.send('file-saved', { success: false, error: err.message });
         return;
       }
+      store.set('lastFilePath', currentFilePath);
       event.sender.send('file-saved', { success: true, filePath: currentFilePath });
     });
   } else {
+    const defaultPath = store.getLastFileDir() || undefined;
     dialog.showSaveDialog(mainWindow, {
+      defaultPath,
       filters: [
         { name: 'HTML Files', extensions: ['html', 'htm'] },
         { name: 'All Files', extensions: ['*'] }
@@ -91,6 +102,7 @@ ipcMain.on('save-file', (event, content) => {
             event.sender.send('file-saved', { success: false, error: err.message });
             return;
           }
+          store.set('lastFilePath', result.filePath);
           event.sender.send('file-saved', { success: true, filePath: result.filePath });
         });
       }
@@ -99,7 +111,9 @@ ipcMain.on('save-file', (event, content) => {
 });
 
 ipcMain.on('save-file-as', (event, content) => {
+  const defaultPath = store.getLastFileDir() || undefined;
   dialog.showSaveDialog(mainWindow, {
+    defaultPath,
     filters: [
       { name: 'HTML Files', extensions: ['html', 'htm'] },
       { name: 'All Files', extensions: ['*'] }
@@ -112,6 +126,7 @@ ipcMain.on('save-file-as', (event, content) => {
           event.sender.send('file-saved', { success: false, error: err.message });
           return;
         }
+        store.set('lastFilePath', result.filePath);
         event.sender.send('file-saved', { success: true, filePath: result.filePath });
       });
     }

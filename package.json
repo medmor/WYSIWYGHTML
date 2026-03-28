@@ -30,6 +30,14 @@
   "build": {
     "appId": "com.wysiwyghtml.editor",
     "productName": "WYSIWYG HTML Editor",
+    "files": [
+      "main.js",
+      "index.html",
+      "src/**/*",
+      "dist/renderer.js",
+      "dist/renderer.js.map",
+      "dist/assets/**/*"
+    ],
     "linux": {
       "target": [
         "AppImage",

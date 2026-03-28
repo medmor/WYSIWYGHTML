@@ -4,10 +4,11 @@
   "description": "WYSIWYG HTML Editor built with Electron and CKEditor 5",
   "main": "main.js",
   "scripts": {
-    "start": "electron . --no-sandbox",
-    "dev": "electron . --no-sandbox",
-    "build": "electron-builder",
-    "build:linux": "electron-builder --linux"
+    "build:renderer": "vite build",
+    "start": "npm run build:renderer && electron . --no-sandbox",
+    "dev": "npm run build:renderer && electron . --no-sandbox",
+    "build": "npm run build:renderer && electron-builder",
+    "build:linux": "npm run build:renderer && electron-builder --linux"
   },
   "keywords": [
     "electron",
@@ -21,8 +22,10 @@
   "license": "ISC",
   "homepage": "https://github.com/medmor/WYSIWYGHTML",
   "devDependencies": {
+    "ckeditor5": "^47.6.1",
     "electron": "^41.1.0",
-    "electron-builder": "^26.8.1"
+    "electron-builder": "^26.8.1",
+    "vite": "^8.0.3"
   },
   "build": {
     "appId": "com.wysiwyghtml.editor",

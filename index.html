@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WYSIWYG HTML Editor</title>
-  <link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/47.6.1/ckeditor5.css" crossorigin>
+  <!-- CKEditor 5 styles (bundled by Vite) -->
+  <link rel="stylesheet" href="dist/assets/main.css">
   <link rel="stylesheet" href="src/style.css">
   <style>
     .file-buttons {
@@ -45,12 +46,8 @@
     </div>
   </div>
 
-  <!-- Load CKEditor 5 from CDN -->
-  <script src="https://cdn.ckeditor.com/ckeditor5/47.6.1/ckeditor5.umd.js" crossorigin></script>
-  <script src="https://cdn.ckeditor.com/ckeditor5/47.6.1/translations/fr.umd.js" crossorigin></script>
-  
-  <!-- Load editor initialization script -->
-  <script src="src/editor.js"></script>
+  <!-- Load bundled renderer (CKEditor + editor logic) -->
+  <script type="module" src="dist/renderer.js"></script>
   
   <!-- Setup IPC for file operations -->
   <script>

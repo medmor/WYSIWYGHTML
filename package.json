@@ -5,19 +5,37 @@
   "main": "main.js",
   "scripts": {
     "start": "electron . --no-sandbox",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "electron . --no-sandbox",
+    "build": "electron-builder",
+    "build:linux": "electron-builder --linux"
   },
   "keywords": [
     "electron",
     "wysiwyg",
     "ckeditor"
   ],
-  "author": "",
+  "author": {
+    "name": "medmor",
+    "email": "medmor@example.com"
+  },
   "license": "ISC",
+  "homepage": "https://github.com/medmor/WYSIWYGHTML",
   "devDependencies": {
-    "electron": "^28.0.0"
+    "electron": "^28.0.0",
+    "electron-builder": "^24.13.3"
   },
   "dependencies": {
     "ckeditor5": "^41.0.0"
+  },
+  "build": {
+    "appId": "com.wysiwyghtml.editor",
+    "productName": "WYSIWYG HTML Editor",
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "TextEditor"
+    }
   }
 }

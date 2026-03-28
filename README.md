@@ -1,138 +1,64 @@
 # WYSIWYG HTML Editor
 
-A WYSIWYG (What You See Is What You Get) HTML editor built with Electron, CKEditor 5, and Vite.
+A WYSIWYG (What You See Is What You Get) HTML editor built with Electron and CKEditor 5.
 
 ## Features
 
-- **CKEditor 5 Decoupled Editor** - Professional WYSIWYG editing experience
-- **French language support** - Full French interface
-- **Rich Text Formatting** - Bold, italic, link, lists, headings, tables, images, etc.
-- **Undo/Redo** - Full history management
-- **File Operations** - Open, Save, Save As, New file
-- **Modern UI** - Clean and intuitive interface
-- **Cross-platform** - Works on Linux, Windows, and macOS
+- **CKEditor 5** — Professional WYSIWYG editing (loaded from CDN)
+- **French interface** — Full French UI
+- **Rich text formatting** — Bold, italic, links, lists, headings, tables, images, etc.
+- **Undo/Redo** — Full history management
+- **File operations** — New, Open, Save, Save As
+- **Cross-platform** — Works on Linux, Windows, and macOS
 
-## Installation
+## Quick Start
 
 ```bash
 npm install
+npm start
 ```
+
+That's it. No build step required for development.
 
 ## Usage
 
-### Development Mode (with Vite dev server)
-
-```bash
-npm run dev
-```
-
-Then in another terminal:
-```bash
-npm start
-```
-
-### Production Build
-
-```bash
-# Build the app
-npm run build
-
-# Start the app
-npm start
-```
+| Action | Button |
+|--------|--------|
+| New file | Nouveau |
+| Open file | Ouvrir |
+| Save | Enregistrer |
+| Save As | Enregistrer sous |
 
 ## Project Structure
 
 ```
 WYSIWYGHTML/
-├── main.js           # Electron main process
-├── index.html        # Editor UI
-├── package.json      # Project dependencies
-├── vite.config.js    # Vite configuration
+├── main.js        # Electron main process (file operations)
+├── index.html     # Editor UI
 ├── src/
-│   ├── main.js       # CKEditor 5 initialization (Decoupled Editor)
-│   └── style.css     # Application styles
-└── README.md         # This file
+│   ├── editor.js  # CKEditor 5 initialization
+│   └── style.css  # Application styles
+├── package.json
+└── README.md
 ```
 
-## CKEditor 5 Integration
+## Build for Distribution
 
-This project uses CKEditor 5 via npm with a custom Decoupled Editor build that includes:
-
-- **Essentials plugin** - Core features (bold, italic, link, lists, undo/redo)
-- **French language** - Full French interface
-- **Document editor** - Full-featured editor with toolbar and menu bar
-- **Plugins included**: Heading, Font, Table, Image, Media, Code Block, Block Quote, Source Editing, and more
-
-## Customization
-
-### Adding More Plugins
-
-Edit `src/main.js` to add more CKEditor 5 plugins:
-
-```javascript
-// Import additional plugins
-import { /* plugin name */ } from 'ckeditor5';
-
-// Add to plugins array
-plugins: [/* existing plugins */, /* new plugin */],
-
-// Add to toolbar
-toolbar: { items: ['/* existing items */', /* new item */] }
+```bash
+npm install electron-builder --save-dev
+npm run build
 ```
 
-### Changing the Theme
+This creates portable Linux AppImage and deb packages in `dist/`.
 
-Edit `src/style.css` to customize the appearance.
+## CKEditor 5
+
+CKEditor 5 is loaded from CDN (`cdn.ckeditor.com`). For offline use or more customization, consider installing via npm:
+
+```bash
+npm install ckeditor5
+```
 
 ## License
 
-This project uses CKEditor 5 with a trial license key. For production use, obtain a proper license from [CKEditor](https://ckeditor.com/).
-
-## Building for Production
-
-To create a distributable app:
-
-1. Install `electron-builder`:
-```bash
-npm install electron-builder --save-dev
-```
-
-2. Add to `package.json`:
-```json
-"build": {
-  "appId": "com.yourapp.wysiwyg",
-  "mac": {
-    "target": "dmg"
-  },
-  "linux": {
-    "target": "AppImage",
-    "category": "TextEditor"
-  },
-  "win": {
-    "target": "nsis"
-  }
-}
-```
-
-3. Build:
-```bash
-npx electron-builder
-```
-
-## Troubleshooting
-
-### Editor not loading
-- Check browser console for errors
-- Ensure all dependencies are installed
-- Verify license key is valid
-
-### File operations not working
-- Ensure `nodeIntegration: true` in main.js
-- Check file system permissions
-
-## Development
-
-- Run `npm run dev` to start Vite dev server
-- Run `npm start` to launch Electron app
-- Changes to `src/main.js` and `src/style.css` will hot-reload
+CKEditor 5 requires a license for production use. See [ckeditor.com](https://ckeditor.com/).

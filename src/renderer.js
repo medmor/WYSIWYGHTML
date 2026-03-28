@@ -71,6 +71,9 @@ import './style.css';
 import { checkOllamaConnection, getAvailableModels } from './ollamaClient.js';
 import { AIFeatures } from './aiFeatures.js';
 
+// UI Components
+import { createNavbarHTML, initNavbar } from './components/navbar.js';
+
 const LICENSE_KEY =
 	'eyJhbGciOiJFUzI1NiJ9.eyJleHAiOjE3NzU3NzkxOTksImp0aSI6IjViZTE1ZTE5LTg4ZTMtNDhkZS1hZTA3LTQwYWY4NzQwZDVkMSIsInVzYWdlRW5kcG9pbnQiOiJodHRwczovL3Byb3h5LWV2ZW50LmNrZWRpdG9yLmNvbSIsImRpc3RyaWJ1dGlvbkNoYW5uZWwiOlsiY2xvdWQiLCJkcnVwYWwiLCJzaCJdLCJ3aGl0ZUxhYmVsIjp0cnVlLCJsaWNlbnNlVHlwZSI6InRyaWFsIiwiZmVhdHVyZXMiOlsiKiJdLCJ2YyI6ImI2YmNlNTBmIn0.aMIFTlFgr034oIP2qERovxq9HqHIwWix6NIkrDGKZJhx3NpyzFj6IXf8IZV9ButHksT2nyYZmr4Hz3oEOaW6vA';
 
@@ -344,6 +347,13 @@ const editorConfig = {
 	translations: [translations]
 };
 
+// Initialize Navbar component
+const navbarContainer = document.getElementById('navbar-container');
+if (navbarContainer) {
+	navbarContainer.innerHTML = createNavbarHTML();
+}
+const navbar = initNavbar({ ipcRenderer: window.ipcRenderer });
+
 // Initialize CKEditor
 DecoupledEditor.create(document.querySelector('#editor'), editorConfig)
 	.then(editor => {
@@ -357,7 +367,7 @@ DecoupledEditor.create(document.querySelector('#editor'), editorConfig)
 		console.log('CKEditor 5 initialized successfully');
 
 		// Setup button click handlers for file operations
-		setupFileButtons(editor);
+		setupFileButtons(editor, navbar);
 
 		// Initialize AI Features
 		initializeAIFeatures(editor);
@@ -369,14 +379,14 @@ DecoupledEditor.create(document.querySelector('#editor'), editorConfig)
 /**
  * Setup click handlers for file operation buttons
  */
-function setupFileButtons(editor) {
+function setupFileButtons(editor, navbar) {
 	const ipcRenderer = window.ipcRenderer;
 
 	// New file button
 	document.getElementById('new-file').addEventListener('click', () => {
 		editor.data.set('');
 		window.currentFilePath = null;
-		document.getElementById('current-file-path').textContent = 'Nouveau fichier';
+		if (navbar) navbar.setFilePath('Nouveau fichier');
 	});
 
 	// Open file button

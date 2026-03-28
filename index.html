@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,113 +7,82 @@
   <!-- CKEditor 5 styles (bundled by Vite) -->
   <link rel="stylesheet" href="dist/assets/main.css">
   <link rel="stylesheet" href="src/style.css">
-  <style>
-    .file-buttons {
-      padding: 10px;
-      display: flex;
-      gap: 10px;
-      background-color: #f5f5f5;
-      border-bottom: 1px solid #ddd;
-    }
-    .file-buttons button {
-      padding: 8px 16px;
-      cursor: pointer;
-    }
-    .file-buttons span {
-      align-self: center;
-      color: #666;
-    }
-    .zoom-controls {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      margin-left: 15px;
-    }
-    .zoom-controls button {
-      padding: 4px 10px;
-      min-width: 30px;
-      font-size: 14px;
-    }
-    #zoom-level {
-      min-width: 45px;
-      text-align: center;
-      font-size: 12px;
-      color: #333;
-    }
-  </style>
 </head>
 <body>
-  <div class="file-buttons">
-    <button id="new-file">Nouveau</button>
-    <button id="open-file">Ouvrir</button>
-    <button id="save-file">Enregistrer</button>
-    <button id="save-file-as">Enregistrer sous</button>
-    <span id="current-file-path">...</span>
-    <div class="zoom-controls">
-      <button id="zoom-out" title="Zoom arrière">−</button>
-      <span id="zoom-level">100%</span>
-      <button id="zoom-in" title="Zoom avant">+</button>
-      <button id="zoom-reset" title="Réinitialiser le zoom">⟲</button>
-    </div>
-    <button id="toggle-ai-sidebar" style="margin-left: auto;">🤖 AI</button>
-  </div>
+  <!-- Navbar container - populated by JavaScript -->
+  <div id="navbar-container"></div>
 
   <div class="app-container">
-    <!-- AI Sidebar -->
-    <div class="ai-sidebar" id="ai-sidebar">
-      <div class="ai-sidebar-header">
-        <h3>🤖 AI Assistant</h3>
-        <button class="ai-close-btn" id="ai-close-btn">×</button>
+    <!-- AI Sidebar with DaisyUI -->
+    <aside class="ai-sidebar bg-base-200 border-l border-base-300" id="ai-sidebar">
+      <div class="p-4 border-b border-base-300 flex items-center justify-between">
+        <h3 class="text-lg font-semibold flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+          AI Assistant
+        </h3>
+        <button class="btn btn-ghost btn-sm btn-circle" id="ai-close-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
       </div>
       
-      <div class="ai-sidebar-content">
+      <div class="p-4 flex flex-col gap-4">
         <!-- Connection Status -->
-        <div class="ai-status">
+        <div class="flex items-center gap-2">
           <span class="status-indicator" id="ai-status-indicator">●</span>
-          <span id="ai-status-text">Vérification de la connexion...</span>
+          <span class="text-sm" id="ai-status-text">Vérification de la connexion...</span>
         </div>
         
         <!-- Model Selection -->
-        <div class="ai-control">
-          <label for="ai-model">Modèle:</label>
-          <select id="ai-model" disabled>
+        <div class="form-control">
+          <label class="label" for="ai-model">
+            <span class="label-text">Modèle</span>
+          </label>
+          <select id="ai-model" class="select select-bordered select-sm w-full" disabled>
             <option value="">Chargement...</option>
           </select>
         </div>
         
         <!-- Prompt Input -->
-        <div class="ai-control">
-          <label for="ai-prompt">Prompt:</label>
-          <textarea id="ai-prompt" rows="4" placeholder="Décrivez ce que vous voulez générer..."></textarea>
+        <div class="form-control">
+          <label class="label" for="ai-prompt">
+            <span class="label-text">Prompt</span>
+          </label>
+          <textarea id="ai-prompt" class="textarea textarea-bordered textarea-sm w-full" rows="4" placeholder="Décrivez ce que vous voulez générer..."></textarea>
         </div>
         
         <!-- Action Buttons -->
-        <div class="ai-actions">
-          <button id="ai-generate" class="ai-btn ai-btn-primary" disabled>
-            ✨ Générer
+        <div class="flex flex-wrap gap-2">
+          <button id="ai-generate" class="btn btn-primary btn-sm flex-1" disabled>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
+            Générer
           </button>
-          <button id="ai-fix-grammar" class="ai-btn" disabled>
-            📝 Corriger
+          <button id="ai-fix-grammar" class="btn btn-ghost btn-sm" disabled>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+            Corriger
           </button>
-          <button id="ai-complete" class="ai-btn" disabled>
-            💡 Compléter
+          <button id="ai-complete" class="btn btn-ghost btn-sm" disabled>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+            Compléter
           </button>
         </div>
         
         <!-- Output Area -->
-        <div class="ai-output">
-          <label>Résultat:</label>
-          <div class="ai-output-content" id="ai-output">
-            <p class="ai-placeholder">Le résultat apparaîtra ici...</p>
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Résultat</span>
+          </label>
+          <div class="bg-base-100 border border-base-300 rounded-lg p-3 min-h-32 max-h-64 overflow-y-auto" id="ai-output">
+            <p class="text-base-content/50 italic">Le résultat apparaîtra ici...</p>
           </div>
         </div>
         
         <!-- Insert Button -->
-        <button id="ai-insert" class="ai-btn ai-btn-success" disabled>
-          📥 Insérer dans l'éditeur
+        <button id="ai-insert" class="btn btn-success btn-sm" disabled>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+          Insérer dans l'éditeur
         </button>
       </div>
-    </div>
+    </aside>
 
     <div class="main-container">
     <div class="editor-container editor-container_document-editor editor-container_include-style editor-container_include-fullscreen">

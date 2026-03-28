@@ -1,6 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Oswald&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 
+@import "tailwindcss";
+@plugin "daisyui";
+
 @media print {
 	body {
 		margin: 0 !important;
@@ -10,6 +13,39 @@
 :root {
 	--ck-content-font-family: 'Lato';
 	--ck-editor-height: 100vh;
+}
+
+/* Navbar compact styles */
+.navbar {
+	min-height: 48px;
+	padding-top: 0.25rem;
+	padding-bottom: 0.25rem;
+}
+
+.navbar .btn-sm {
+	height: 32px;
+	min-height: 32px;
+	padding-left: 0.625rem;
+	padding-right: 0.625rem;
+	font-size: 0.8125rem;
+}
+
+.navbar .btn-circle.btn-sm {
+	height: 32px;
+	width: 32px;
+	min-height: 32px;
+}
+
+.navbar .join .btn-sm.join-item {
+	padding-left: 0.5rem;
+	padding-right: 0.5rem;
+}
+
+/* Fix icon sizing in navbar buttons */
+.navbar .btn svg {
+	width: 1rem;
+	height: 1rem;
+	flex-shrink: 0;
 }
 
 .main-container {
@@ -173,8 +209,8 @@
 
 .ai-sidebar {
 	width: 320px;
-	background: #f8f9fa;
-	border-left: 1px solid #ddd;
+	background: oklch(var(--b2));
+	border-left: 1px solid oklch(var(--bc) / 0.2);
 	display: flex;
 	flex-direction: column;
 	transition: transform 0.3s ease, opacity 0.3s ease;
@@ -193,8 +229,8 @@
 	justify-content: space-between;
 	align-items: center;
 	padding: 12px 16px;
-	background: #4a6fa5;
-	color: white;
+	background: oklch(var(--p));
+	color: oklch(var(--pc));
 }
 
 .ai-sidebar-header h3 {
@@ -206,7 +242,7 @@
 .ai-close-btn {
 	background: none;
 	border: none;
-	color: white;
+	color: oklch(var(--pc));
 	font-size: 24px;
 	cursor: pointer;
 	padding: 0 4px;
@@ -228,7 +264,7 @@
 	align-items: center;
 	gap: 8px;
 	padding: 8px 12px;
-	background: #e9ecef;
+	background: oklch(var(--b3));
 	border-radius: 6px;
 	margin-bottom: 16px;
 }
@@ -238,15 +274,15 @@
 }
 
 .status-indicator.connected {
-	color: #28a745;
+	color: oklch(var(--su));
 }
 
 .status-indicator.disconnected {
-	color: #dc3545;
+	color: oklch(var(--er));
 }
 
 .status-indicator.checking {
-	color: #ffc107;
+	color: oklch(var(--wa));
 }
 
 .ai-control {
@@ -257,7 +293,7 @@
 	display: block;
 	margin-bottom: 6px;
 	font-weight: 600;
-	color: #333;
+	color: oklch(var(--bc));
 	font-size: 14px;
 }
 
@@ -265,11 +301,12 @@
 .ai-control textarea {
 	width: 100%;
 	padding: 8px 12px;
-	border: 1px solid #ccc;
+	border: 1px solid oklch(var(--bc) / 0.2);
 	border-radius: 6px;
 	font-size: 14px;
 	font-family: inherit;
-	background: white;
+	background: oklch(var(--b1));
+	color: oklch(var(--bc));
 }
 
 .ai-control textarea {
@@ -280,8 +317,8 @@
 .ai-control select:focus,
 .ai-control textarea:focus {
 	outline: none;
-	border-color: #4a6fa5;
-	box-shadow: 0 0 0 2px rgba(74, 111, 165, 0.2);
+	border-color: oklch(var(--p));
+	box-shadow: 0 0 0 2px oklch(var(--p) / 0.2);
 }
 
 .ai-actions {
@@ -299,12 +336,12 @@
 	font-size: 14px;
 	font-weight: 500;
 	transition: all 0.2s ease;
-	background: #e9ecef;
-	color: #333;
+	background: oklch(var(--b3));
+	color: oklch(var(--bc));
 }
 
 .ai-btn:hover:not(:disabled) {
-	background: #dee2e6;
+	background: oklch(var(--b2));
 }
 
 .ai-btn:disabled {
@@ -313,23 +350,23 @@
 }
 
 .ai-btn-primary {
-	background: #4a6fa5;
-	color: white;
+	background: oklch(var(--p));
+	color: oklch(var(--pc));
 }
 
 .ai-btn-primary:hover:not(:disabled) {
-	background: #3d5d8a;
+	background: oklch(var(--p) / 0.8);
 }
 
 .ai-btn-success {
 	width: 100%;
-	background: #28a745;
-	color: white;
+	background: oklch(var(--su));
+	color: oklch(var(--suc));
 	margin-top: 16px;
 }
 
 .ai-btn-success:hover:not(:disabled) {
-	background: #218838;
+	background: oklch(var(--su) / 0.8);
 }
 
 .ai-output {
@@ -340,13 +377,13 @@
 	display: block;
 	margin-bottom: 6px;
 	font-weight: 600;
-	color: #333;
+	color: oklch(var(--bc));
 	font-size: 14px;
 }
 
 .ai-output-content {
-	background: white;
-	border: 1px solid #ccc;
+	background: oklch(var(--b1));
+	border: 1px solid oklch(var(--bc) / 0.2);
 	border-radius: 6px;
 	padding: 12px;
 	min-height: 100px;
@@ -354,16 +391,17 @@
 	overflow-y: auto;
 	font-size: 14px;
 	line-height: 1.5;
+	color: oklch(var(--bc));
 }
 
 .ai-placeholder {
-	color: #999;
+	color: oklch(var(--bc) / 0.5);
 	font-style: italic;
 	margin: 0;
 }
 
 .ai-loading {
-	color: #666;
+	color: oklch(var(--bc) / 0.6);
 	font-style: italic;
 }
 

@@ -166,75 +166,90 @@ ipcMain.on('save-file-as', (event, content) => {
   });
 });
 
-// Export to PDF
-ipcMain.on('export-pdf', async (event, content) => {
-  const defaultPath = store.getLastFileDir() || undefined;
-  const pdfPath = await dialog.showSaveDialog(mainWindow, {
-    defaultPath,
-    filters: [
-      { name: 'PDF Files', extensions: ['pdf'] },
-      { name: 'All Files', extensions: ['*'] }
-    ]
+// PDF export window
+let pdfWindow = null;
+let pdfMargins = { top: 25, right: 25, bottom: 25, left: 25 }; // Default margins
+
+ipcMain.on('show-pdf-export', (event, data) => {
+  // Store margins for later use in PDF export
+  if (data.margins) {
+    pdfMargins = data.margins;
+  }
+
+  // Create a new browser window for PDF export
+  pdfWindow = new BrowserWindow({
+    width: 800,
+    height: 1000,
+    title: 'Exporter en PDF',
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false
+    }
   });
 
-  if (!pdfPath.canceled && pdfPath.filePath) {
-    try {
-      // Create a temporary HTML file with print styles
-      const tempHtmlPath = path.join(app.getPath('temp'), 'print-preview.html');
-      const printHtml = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Print Preview</title>
-  <style>
-    @page {
-      size: A4;
-      margin: 25mm;
-    }
-    body {
-      font-family: 'Times New Roman', Times, serif;
-      font-size: 12pt;
-      line-height: 1.5;
-      color: #000;
-    }
-    ${content}
-  </style>
-</head>
-<body>
-  ${content}
-</body>
-</html>`;
-      
-      fs.writeFileSync(tempHtmlPath, printHtml, 'utf8');
-      
-      // Load the content and print to PDF
-      await mainWindow.loadFile(tempHtmlPath);
-      
-      const pdfData = await mainWindow.webContents.printToPDF({
-        pageSize: 'A4',
-        printBackground: false,
-        margins: {
-          top: 25,
-          bottom: 25,
-          left: 25,
-          right: 25
-        }
-      });
+  pdfWindow.loadFile('print.html');
 
-      fs.writeFileSync(pdfPath.filePath, pdfData);
-      
-      // Reload the editor
-      mainWindow.loadFile('index.html');
-      
-      event.sender.send('pdf-exported', { success: true, filePath: pdfPath.filePath });
-    } catch (error) {
-      event.sender.send('pdf-exported', { success: false, error: error.message });
+  // Wait for window to load, then send content
+  pdfWindow.webContents.once('did-finish-load', () => {
+    console.log('[Main] PDF window finished loading, sending content');
+    pdfWindow.webContents.send('print-content', {
+      content: data.content,
+      styles: data.styles,
+      margins: data.margins
+    });
+  });
+
+  pdfWindow.on('closed', () => {
+    pdfWindow = null;
+  });
+});
+
+// Save to PDF directly
+ipcMain.handle('save-to-pdf', async (event) => {
+  console.log('[Main] ========== save-to-pdf invoked ==========');
+  
+  if (!pdfWindow || pdfWindow.isDestroyed()) {
+    console.log('[Main] Cannot save - window not available');
+    return { success: false, error: 'Window not available' };
+  }
+
+  const { dialog } = require('electron');
+  
+  try {
+    const { filePath } = await dialog.showSaveDialog(pdfWindow, {
+      title: 'Enregistrer en PDF',
+      defaultPath: 'document.pdf',
+      filters: [{ name: 'PDF', extensions: ['pdf'] }]
+    });
+    
+    if (!filePath) {
+      return { success: false, error: 'Cancelled' };
     }
+    
+    const pdfData = await pdfWindow.webContents.printToPDF({
+      pageSize: 'A4',
+      printBackground: true,
+      margins: {
+        top: pdfMargins.top * 0.0393701, // mm to inches
+        bottom: pdfMargins.bottom * 0.0393701,
+        left: pdfMargins.left * 0.0393701,
+        right: pdfMargins.right * 0.0393701,
+        marginType: 'custom'
+      }
+    });
+    
+    const fs = require('fs');
+    fs.writeFileSync(filePath, pdfData);
+    console.log('[Main] PDF saved to:', filePath);
+    
+    return { success: true, filePath };
+  } catch (err) {
+    console.error('[Main] PDF save error:', err);
+    return { success: false, error: err.message };
   }
 });
 
-// Show preview in separate window
+// Show PDF export window
 ipcMain.on('show-preview', (event, data) => {
   const win = createPreviewWindow();
   

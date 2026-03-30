@@ -127,8 +127,10 @@
         if (window.currentEditor) {
           window.currentEditor.data.set(content);
         }
-        document.getElementById('current-file-path').textContent = filePath;
         window.currentFilePath = filePath;
+        // Update document title with file name
+        const fileName = filePath.split('/').pop().split('\\').pop();
+        document.title = `WYSIWYG HTML Editor : ${fileName}`;
       } else {
         alert('Erreur lors de l\'ouverture du fichier: ' + error);
       }
@@ -137,8 +139,10 @@
     // Handle file saved event
     ipcRenderer.on('file-saved', (event, { success, filePath, error }) => {
       if (success) {
-        document.getElementById('current-file-path').textContent = filePath;
         window.currentFilePath = filePath;
+        // Update document title with file name
+        const fileName = filePath.split('/').pop().split('\\').pop();
+        document.title = `WYSIWYG HTML Editor : ${fileName}`;
         alert('Fichier enregistré avec succès: ' + filePath);
       } else {
         alert('Erreur lors de l\'enregistrement: ' + error);
@@ -163,7 +167,9 @@
               return;
             }
             window.currentFilePath = result.filePath;
-            document.getElementById('current-file-path').textContent = result.filePath;
+            // Update document title with file name
+            const fileName = result.filePath.split('/').pop().split('\\').pop();
+            document.title = `WYSIWYG HTML Editor : ${fileName}`;
             alert('Fichier enregistré avec succès: ' + result.filePath);
           });
         }

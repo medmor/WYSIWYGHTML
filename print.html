@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exporter en PDF</title>
+  <style id="base-styles">
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      background: #f0f0f0;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    #toolbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: #333;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    #toolbar h1 {
+      color: white;
+      font-size: 16px;
+      font-weight: 500;
+    }
+    
+    #toolbar button {
+      background: #4a90d9;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-left: 10px;
+    }
+    
+    #toolbar button:hover {
+      background: #357abd;
+    }
+    
+
+    
+    #content-container {
+      margin-top: 60px;
+      max-width: 100%;
+    }
+    
+    #print-content {
+      background: white;
+      width: 210mm;
+      min-height: 297mm;
+      margin: 10mm auto;
+      padding: 25mm;
+      box-shadow: 0 2mm 4mm rgba(0, 0, 0, 0.2);
+      box-sizing: border-box;
+    }
+    
+    /* Print styles */
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+      
+      #toolbar {
+        display: none !important;
+      }
+      
+      #content-container {
+        margin-top: 0;
+      }
+      
+      #print-content {
+        box-shadow: none;
+        margin: 0;
+        width: 100%;
+        padding: 0;
+      }
+      
+      @page {
+        size: A4;
+        margin: 25mm;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="toolbar">
+    <h1>Exporter en PDF</h1>
+    <button id="save-pdf-btn">Enregistrer en PDF</button>
+  </div>
+  
+  <div id="content-container">
+    <div id="print-content">
+      <p>Chargement...</p>
+    </div>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+    
+    // Wait for DOM to be ready
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('[Print Preview] DOM ready, setting up event listeners');
+      
+      // Save to PDF button
+      const savePdfBtn = document.getElementById('save-pdf-btn');
+      if (savePdfBtn) {
+        savePdfBtn.addEventListener('click', async () => {
+          console.log('[Print Preview] Save to PDF button clicked');
+          try {
+            const result = await ipcRenderer.invoke('save-to-pdf');
+            console.log('[Print Preview] Save result:', result);
+            if (result.success) {
+              alert('PDF enregistré: ' + result.filePath);
+            } else if (result.error !== 'Cancelled') {
+              alert('Erreur: ' + result.error);
+            }
+          } catch (err) {
+            console.error('[Print Preview] Save error:', err);
+            alert('Erreur: ' + err.message);
+          }
+        });
+        console.log('[Print Preview] Event listener attached to save-pdf button');
+      }
+    });
+    
+    // Handle content from main window
+    ipcRenderer.on('print-content', (event, data) => {
+      console.log('[Print Preview] Received content');
+      const contentDiv = document.getElementById('print-content');
+      
+      // Set content
+      contentDiv.innerHTML = data.content || '<p>Aucun contenu</p>';
+      
+      // Apply custom styles if provided
+      if (data.styles) {
+        const newStyleEl = document.createElement('style');
+        newStyleEl.id = 'dynamic-styles';
+        newStyleEl.textContent = data.styles;
+        document.head.appendChild(newStyleEl);
+      }
+      
+      // Update margins if provided
+      if (data.margins) {
+        const margins = data.margins;
+        contentDiv.style.padding = `${margins.top}mm ${margins.right}mm ${margins.bottom}mm ${margins.left}mm`;
+        // Update @page rule for print
+        const pageStyle = document.createElement('style');
+        pageStyle.textContent = `
+          @media print {
+            @page {
+              size: A4;
+              margin: ${margins.top}mm ${margins.right}mm ${margins.bottom}mm ${margins.left}mm;
+            }
+          }
+        `;
+        document.head.appendChild(pageStyle);
+      }
+    });
+  </script>
+</body>
+</html>

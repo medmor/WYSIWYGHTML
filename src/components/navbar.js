@@ -33,11 +33,6 @@ export function createNavbarHTML() {
       </div>
     </div>
     
-    <!-- Current file path -->
-    <div class="navbar-center">
-      <span id="current-file-path" class="text-sm text-base-content/60 font-mono">...</span>
-    </div>
-    
     <!-- Zoom controls and actions -->
     <div class="navbar-end gap-2">
       <!-- Preview and Export buttons -->
@@ -117,24 +112,5 @@ export function initNavbar(options = {}) {
   
   // Return public API for navbar
   return {
-    /**
-     * Updates the current file path display
-     * @param {string} filePath - The file path to display
-     */
-    setFilePath(filePath) {
-      const filePathElement = document.getElementById('current-file-path');
-      if (filePathElement) {
-        filePathElement.textContent = filePath;
-      }
-    },
-    
-    /**
-     * Gets the current file path from display
-     * @returns {string} Current file path
-     */
-    getFilePath() {
-      const filePathElement = document.getElementById('current-file-path');
-      return filePathElement ? filePathElement.textContent : '';
-    }
   };
 }

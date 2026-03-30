@@ -462,10 +462,11 @@ function setupFileButtons(editor, navbar) {
 		paginationManager.enablePreview();
 	});
 
-	// Export PDF button
+	// Export PDF button - opens print preview in new window
 	document.getElementById('export-pdf').addEventListener('click', () => {
 		const content = paginationManager.getContentForPrint();
-		ipcRenderer.send('export-pdf', content);
+		const margins = paginationManager.getMargins();
+ipcRenderer.send('show-pdf-export', { content, margins });
 	});
 
 	// Margin selection dropdown

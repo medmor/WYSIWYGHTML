@@ -31,24 +31,19 @@ export async function checkOllamaConnection(baseUrl = OLLAMA_DEFAULT_URL) {
  */
 export async function getAvailableModels(baseUrl = OLLAMA_DEFAULT_URL) {
 	try {
-		console.log('Fetching models from:', `${baseUrl}/api/tags`);
 		const response = await fetch(`${baseUrl}/api/tags`, {
 			method: 'GET',
 			headers: { 'Content-Type': 'application/json' }
 		});
-		
-		console.log('Response status:', response.status);
 		
 		if (!response.ok) {
 			throw new Error(`HTTP error! status: ${response.status}`);
 		}
 		
 		const data = await response.json();
-		console.log('Raw API response:', data);
 		
 		// Extract model names from the response
 		const modelNames = (data.models || []).map(model => model.name);
-		console.log('Extracted model names:', modelNames);
 		return modelNames;
 	} catch (error) {
 		console.error('Failed to get available models:', error);

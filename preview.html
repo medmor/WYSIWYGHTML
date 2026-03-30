@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aperçu - Pagination A4</title>
+  <style id="base-styles">
+    /* @page rule will be injected dynamically - Paged.js doesn't support CSS variables */
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      background: #f0f0f0;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    #loading {
+      text-align: center;
+      padding: 50px;
+      color: #666;
+    }
+    
+    #preview-container {
+      max-width: 100%;
+    }
+    
+    /* A4 Page Styles */
+    .pagedjs_page {
+      background: white;
+      width: 210mm;
+      min-height: 297mm;
+      margin: 10mm auto;
+      box-shadow: 0 2mm 4mm rgba(0, 0, 0, 0.2);
+      /* No padding - margins are controlled by @page rules */
+      box-sizing: border-box;
+    }
+    
+    /* Page numbers */
+    .pagedjs_page_number {
+      position: absolute;
+      bottom: 10mm;
+      right: 15mm;
+      font-size: 10pt;
+      color: #666;
+    }
+    
+    /* Print styles */
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+      
+      .pagedjs_page {
+        margin: 0;
+        box-shadow: none;
+        page-break-after: always;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="loading">Chargement de l'aperçu...</div>
+  <div id="preview-container"></div>
+  
+  <script src="https://unpkg.com/pagedjs/dist/paged.legacy.js"></script>
+  <script>
+    const { ipcRenderer } = require('electron');
+    
+    // Store current content for re-use during refresh
+    let currentContent = '';
+    let currentStyles = '';
+    
+    /**
+     * Inject @page rule with actual margin values
+     * Paged.js reads this during initialization
+     * @param {Object} margins - { top, right, bottom, left } in mm
+     */
+    function updatePageMargins(margins) {
+      // Remove existing @page style if any
+      const existingStyle = document.getElementById('page-margins-style');
+      if (existingStyle) existingStyle.remove();
+      
+      // Create new style with @page rule
+      const style = document.createElement('style');
+      style.id = 'page-margins-style';
+      style.textContent = `
+        @page {
+          size: A4;
+          margin: ${margins.top}mm ${margins.right}mm ${margins.bottom}mm ${margins.left}mm;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+    
+    /**
+     * Update Paged.js internal CSS variables for margins
+     * These control margin boxes and other Paged.js internals
+     * @param {Object} margins - { top, right, bottom, left } in mm
+     */
+    function updatePagedJsMargins(margins) {
+      const root = document.documentElement;
+      // Paged.js uses these internal variables for margin boxes
+      root.style.setProperty('--pagedjs-margin-top', `${margins.top}mm`);
+      root.style.setProperty('--pagedjs-margin-right', `${margins.right}mm`);
+      root.style.setProperty('--pagedjs-margin-bottom', `${margins.bottom}mm`);
+      root.style.setProperty('--pagedjs-margin-left', `${margins.left}mm`);
+    }
+    
+    /**
+     * Run Paged.js previewer with current content
+     * @param {HTMLElement} container - Container for paged output
+     */
+    async function runPagedPreview(container) {
+      // Create source element for paged.js
+      const sourceElement = document.createElement('div');
+      sourceElement.innerHTML = currentContent;
+      sourceElement.style.width = '210mm';
+      document.body.appendChild(sourceElement);
+      
+      // Run Paged.js
+      const previewer = new Paged.Previewer();
+      await previewer.preview(sourceElement, [], container);
+      
+      // Clean up source element
+      sourceElement.remove();
+    }
+    
+    // Listen for content from main window
+    ipcRenderer.on('preview-content', async (event, data) => {
+      try {
+        // Store content for future refreshes
+        currentContent = data.content;
+        currentStyles = data.styles;
+        
+        // Get container element
+        const container = document.getElementById('preview-container');
+        
+        // Inject @page rule with actual margin values BEFORE Paged.js runs
+        const margins = data.margins || { top: 25, right: 20, bottom: 30, left: 20 };
+        updatePageMargins(margins);
+        
+        // Inject additional styles (if any)
+        let styleEl = document.getElementById('custom-styles');
+        if (styleEl) styleEl.remove();
+        styleEl = document.createElement('style');
+        styleEl.id = 'custom-styles';
+        styleEl.textContent = data.styles;
+        document.head.appendChild(styleEl);
+        
+        // Run Paged.js
+        await runPagedPreview(container);
+        
+        // Update Paged.js internal margin variables AFTER render
+        updatePagedJsMargins(margins);
+        
+        loading.style.display = 'none';
+        ipcRenderer.send('preview-ready');
+      } catch (error) {
+        loading.textContent = 'Erreur lors du chargement: ' + error.message;
+        console.error('[Preview] Error:', error);
+      }
+    });
+    
+    // Handle print request
+    ipcRenderer.on('print-preview', () => {
+      window.print();
+    });
+    
+    // Handle margin changes - re-render with new margins
+    ipcRenderer.on('refresh-preview-content', async (event, data) => {
+      const container = document.getElementById('preview-container');
+      try {
+        // Update content if provided
+        if (data.content) currentContent = data.content;
+        if (data.styles) currentStyles = data.styles;
+        
+        // Inject @page rule with actual margin values
+        const margins = data.margins || { top: 25, right: 20, bottom: 30, left: 20 };
+        updatePageMargins(margins);
+        
+        // Clear existing preview (Paged.js output)
+        container.innerHTML = '';
+        loading.style.display = 'block';
+        
+        // Re-run Paged.js - it will read the updated @page rule
+        await runPagedPreview(container);
+        
+        // Update Paged.js internal margin variables AFTER render
+        updatePagedJsMargins(margins);
+        
+        loading.style.display = 'none';
+      } catch (error) {
+        loading.textContent = 'Erreur lors du rafraîchissement: ' + error.message;
+        console.error('[Preview] Refresh error:', error);
+      }
+    });
+  </script>
+</body>
+</html>
+</body>
+</html>

@@ -40,6 +40,33 @@ export function createNavbarHTML() {
     
     <!-- Zoom controls and actions -->
     <div class="navbar-end gap-2">
+      <!-- Preview and Export buttons -->
+      <div class="join">
+        <button id="preview-toggle" class="btn btn-ghost btn-sm join-item" title="Aperçu pagination A4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+          Aperçu
+        </button>
+        <div class="dropdown dropdown-bottom dropdown-end">
+          <label tabindex="0" class="btn btn-ghost btn-sm join-item" title="Marges de page">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" /></svg>
+            <span id="current-margin-label">Normal</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+          </label>
+          <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-50">
+            <li><a data-margin="normal" class="margin-option">Normal (25mm)</a></li>
+            <li><a data-margin="big" class="margin-option">Grandes (35mm)</a></li>
+            <li><a data-margin="narrow" class="margin-option">Étroites (15mm)</a></li>
+            <li class="border-t border-base-300 mt-1 pt-1">
+              <a data-margin="custom" class="margin-option">Personnalisées</a>
+            </li>
+          </ul>
+        </div>
+        <button id="export-pdf" class="btn btn-ghost btn-sm join-item" title="Exporter en PDF">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+          PDF
+        </button>
+      </div>
+      
       <div class="join">
         <button id="zoom-out" class="btn btn-ghost btn-sm join-item" title="Zoom arrière">−</button>
         <span id="zoom-level" class="btn btn-ghost btn-sm join-item pointer-events-none min-w-16">100%</span>

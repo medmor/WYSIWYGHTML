@@ -70,6 +70,10 @@ import './style.css';
 import { checkOllamaConnection, getAvailableModels } from './ollamaClient.js';
 import { AIFeatures } from './aiFeatures.js';
 
+// Pagination imports
+import { paginationManager } from './pagination.js';
+import './pagination.css';
+
 // UI Components
 import { createNavbarHTML, initNavbar } from './components/navbar.js';
 
@@ -362,13 +366,17 @@ DecoupledEditor.create(document.querySelector('#editor'), editorConfig)
 		// Make editor available globally for IPC handlers
 		window.currentEditor = editor;
 
-		console.log('CKEditor 5 initialized successfully');
-
 		// Setup button click handlers for file operations
 		setupFileButtons(editor, navbar);
 
 		// Initialize AI Features
 		initializeAIFeatures(editor);
+
+		// Initialize Pagination Manager
+		paginationManager.init(editor, {
+			previewContainer: '#preview-container',
+			pageCountElement: '#page-count'
+		});
 	})
 	.catch(error => {
 		console.error('CKEditor 5 initialization error:', error);
@@ -448,6 +456,132 @@ function setupFileButtons(editor, navbar) {
 		currentZoom = 100;
 		updateZoom();
 	});
+
+	// Preview toggle button - opens separate window
+	document.getElementById('preview-toggle').addEventListener('click', () => {
+		paginationManager.enablePreview();
+	});
+
+	// Export PDF button
+	document.getElementById('export-pdf').addEventListener('click', () => {
+		const content = paginationManager.getContentForPrint();
+		ipcRenderer.send('export-pdf', content);
+	});
+
+	// Margin selection dropdown
+	const marginOptions = document.querySelectorAll('.margin-option');
+	const currentMarginLabel = document.getElementById('current-margin-label');
+	
+	marginOptions.forEach(option => {
+		option.addEventListener('click', (e) => {
+			const marginType = e.target.dataset.margin;
+			if (marginType === 'custom') {
+				// Show custom margin dialog
+				showCustomMarginDialog((customMargins) => {
+					if (customMargins) {
+						paginationManager.setMarginPreset('custom', customMargins);
+						updateMarginLabel(currentMarginLabel, 'custom', customMargins);
+					}
+				});
+			} else {
+				paginationManager.setMarginPreset(marginType);
+				updateMarginLabel(currentMarginLabel, marginType);
+			}
+		});
+	});
+
+	// Initialize margin label
+	if (currentMarginLabel) {
+		currentMarginLabel.textContent = 'Normal';
+	}
+}
+
+// Helper function to update margin label
+function updateMarginLabel(labelElement, marginType, customMargins = null) {
+	if (!labelElement) return;
+	
+	const presets = paginationManager.getMarginPresets();
+	if (marginType === 'custom' && customMargins) {
+		labelElement.textContent = `${customMargins.top}/${customMargins.left}`;
+	} else {
+		labelElement.textContent = presets[marginType]?.label || 'Normal';
+	}
+}
+
+// Custom modal dialog for margins
+function showCustomMarginDialog(callback) {
+	// Remove existing dialog if any
+	const existingDialog = document.getElementById('custom-margin-dialog');
+	if (existingDialog) {
+		existingDialog.remove();
+	}
+
+	// Create dialog
+	const dialog = document.createElement('div');
+	dialog.id = 'custom-margin-dialog';
+	dialog.innerHTML = `
+		<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+			<div class="bg-base-100 p-6 rounded-lg shadow-xl w-80">
+				<h3 class="text-lg font-bold mb-4">Marges personnalisées</h3>
+				<div class="space-y-3">
+					<div class="form-control">
+						<label class="label py-1">
+							<span class="label-text">Supérieure (mm)</span>
+						</label>
+						<input type="number" id="margin-top" value="25" min="5" max="50" class="input input-bordered input-sm w-full" />
+					</div>
+					<div class="form-control">
+						<label class="label py-1">
+							<span class="label-text">Droite (mm)</span>
+						</label>
+						<input type="number" id="margin-right" value="20" min="5" max="50" class="input input-bordered input-sm w-full" />
+					</div>
+					<div class="form-control">
+						<label class="label py-1">
+							<span class="label-text">Inférieure (mm)</span>
+						</label>
+						<input type="number" id="margin-bottom" value="30" min="5" max="50" class="input input-bordered input-sm w-full" />
+					</div>
+					<div class="form-control">
+						<label class="label py-1">
+							<span class="label-text">Gauche (mm)</span>
+						</label>
+						<input type="number" id="margin-left" value="20" min="5" max="50" class="input input-bordered input-sm w-full" />
+					</div>
+				</div>
+				<div class="flex justify-end gap-2 mt-4">
+					<button id="margin-cancel" class="btn btn-sm btn-ghost">Annuler</button>
+					<button id="margin-apply" class="btn btn-sm btn-primary">Appliquer</button>
+				</div>
+			</div>
+		</div>
+	`;
+	document.body.appendChild(dialog);
+
+	// Handle buttons
+	document.getElementById('margin-cancel').addEventListener('click', () => {
+		dialog.remove();
+		callback(null);
+	});
+
+	document.getElementById('margin-apply').addEventListener('click', () => {
+		const margins = {
+			top: parseInt(document.getElementById('margin-top').value) || 25,
+			right: parseInt(document.getElementById('margin-right').value) || 20,
+			bottom: parseInt(document.getElementById('margin-bottom').value) || 30,
+			left: parseInt(document.getElementById('margin-left').value) || 20
+		};
+		dialog.remove();
+		callback(margins);
+	});
+
+	// Close on backdrop click
+	dialog.querySelector('.fixed').addEventListener('click', (e) => {
+		if (e.target === dialog.querySelector('.fixed')) {
+			dialog.remove();
+			callback(null);
+		}
+	});
 }
 
 /**
@@ -466,7 +600,6 @@ async function initializeAIFeatures(editor) {
 
 			// Get available models
 			const models = await getAvailableModels();
-			console.log('Available models:', models);
 			
 			if (modelSelect) {
 				if (models.length > 0) {

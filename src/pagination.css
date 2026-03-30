@@ -1,0 +1,178 @@
+/**
+ * A4 Pagination Styles for Paged.js
+ * Defines page dimensions, margins, and break controls for print/preview mode
+ */
+
+/* A4 Page Dimensions */
+@page {
+	size: A4;
+	margin: 25mm 20mm 30mm 20mm; /* top right bottom left */
+
+	@top-center {
+		content: env(doc-title);
+		font-size: 10pt;
+		color: #666;
+	}
+
+	@bottom-center {
+		content: counter(page) " / " counter(pages);
+		font-size: 10pt;
+		color: #666;
+	}
+}
+
+/* First page can have different margins */
+@page :first {
+	margin-top: 30mm;
+	@top-center {
+		content: none;
+	}
+}
+
+/* Page Break Controls */
+.page-break {
+	break-before: page;
+	page-break-before: always;
+}
+
+.page-break-after {
+	break-after: page;
+	page-break-after: always;
+}
+
+.avoid-break {
+	break-inside: avoid;
+	page-break-inside: avoid;
+}
+
+/* Prevent orphans and widows */
+p, li, h1, h2, h3, h4, h5, h6 {
+	orphans: 3;
+	widows: 3;
+}
+
+/* Tables should avoid breaking across pages when possible */
+table {
+	break-inside: avoid;
+}
+
+/* Images should not break */
+img {
+	break-inside: avoid;
+	max-width: 100%;
+}
+
+/* Code blocks should not break */
+pre, code {
+	break-inside: avoid;
+	white-space: pre-wrap;
+	word-wrap: break-word;
+}
+
+/* Preview Container Styles */
+.preview-container {
+	background-color: #e5e5e5;
+	padding: 20px;
+	min-height: 100vh;
+	overflow-y: auto;
+}
+
+/* Individual Page Styling in Preview */
+.preview-container .pagedjs_page {
+	background: white;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+	margin: 20px auto;
+	position: relative;
+}
+
+/* Page Content Area */
+.preview-container .pagedjs_page_content {
+	padding: 0;
+}
+
+/* Dark Mode Support for Preview */
+[data-theme="dark"] .preview-container {
+	background-color: #1a1a2e;
+}
+
+[data-theme="dark"] .preview-container .pagedjs_page {
+	background: #16213e;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* Ensure content is readable in dark mode preview */
+[data-theme="dark"] .preview-container .pagedjs_page_content {
+	color: #e0e0e0;
+}
+
+/* Print Styles */
+@media print {
+	body {
+		margin: 0 !important;
+		padding: 0 !important;
+	}
+
+	/* Hide non-content elements */
+	.navbar,
+	.ai-sidebar,
+	.editor-container__toolbar,
+	.editor-container__menu-bar,
+	#preview-controls {
+		display: none !important;
+	}
+
+	/* Ensure content fills page */
+	.preview-container {
+		padding: 0;
+		background: white;
+	}
+
+	.preview-container .pagedjs_page {
+		box-shadow: none;
+		margin: 0;
+	}
+}
+
+/* Loading State for Preview */
+.preview-loading {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100vh;
+	font-size: 1.2rem;
+	color: #666;
+}
+
+[data-theme="dark"] .preview-loading {
+	color: #aaa;
+}
+
+/* Preview Controls Bar */
+#preview-controls {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 16px;
+	padding: 12px 20px;
+	background: var(--ck-color-base-background, #fff);
+	border-bottom: 1px solid var(--ck-color-toolbar-border, #ddd);
+	position: sticky;
+	top: 0;
+	z-index: 100;
+}
+
+[data-theme="dark"] #preview-controls {
+	background: #1e1e2e;
+	border-bottom-color: #333;
+}
+
+#preview-controls .page-info {
+	font-size: 0.9rem;
+	color: var(--ck-color-text, #333);
+}
+
+#preview-controls .btn {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}

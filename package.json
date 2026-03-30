@@ -50,5 +50,8 @@
       ],
       "category": "TextEditor"
     }
+  },
+  "dependencies": {
+    "pagedjs": "^0.4.3"
   }
 }

@@ -59,6 +59,3 @@ CKEditor 5 is loaded from CDN (`cdn.ckeditor.com`). For offline use or more cust
 npm install ckeditor5
 ```
 
-## License
-
-CKEditor 5 requires a license for production use. See [ckeditor.com](https://ckeditor.com/).

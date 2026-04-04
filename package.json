@@ -37,7 +37,10 @@
     "productName": "WYSIWYG HTML Editor",
     "files": [
       "main.js",
+      "store.js",
       "index.html",
+      "preview.html",
+      "print.html",
       "src/**/*",
       "dist/renderer.js",
       "dist/renderer.js.map",

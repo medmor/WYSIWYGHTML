@@ -36,10 +36,11 @@ class GrammalecteServer {
     
     this.startupPromise = new Promise((resolve, reject) => {
       try {
-        // Spawn the Python server process
+        // Spawn the Python server process with a detached process group
         this.process = spawn('python3', [serverPath, '--port', String(port), '--host', this.host], {
           cwd: __dirname,
-          stdio: ['ignore', 'pipe', 'pipe']
+          stdio: ['ignore', 'pipe', 'pipe'],
+          detached: true  // Create a new process group for clean termination
         });
 
         this.process.stdout.on('data', (data) => {
@@ -118,7 +119,13 @@ class GrammalecteServer {
    */
   stop() {
     if (this.process) {
-      this.process.kill('SIGTERM');
+      try {
+        // Kill the entire process group (negative PID) to terminate all worker threads
+        process.kill(-this.process.pid, 'SIGTERM');
+      } catch (err) {
+        // Process group may not exist, try killing just the main process
+        this.process.kill('SIGTERM');
+      }
       this.process = null;
       this.isRunning = false;
       this.startupPromise = null;

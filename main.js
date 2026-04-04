@@ -60,10 +60,19 @@ function createPreviewWindow() {
   return previewWindow;
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   // Load persisted state
   store.loadState();
   currentFilePath = store.get('lastFilePath');
+  
+  // Start Grammalecte server automatically
+  try {
+    console.log('[Main] Starting Grammalecte server...');
+    await grammalecteServer.start(8085);
+    console.log('[Main] Grammalecte server started successfully');
+  } catch (err) {
+    console.error('[Main] Failed to start Grammalecte server:', err);
+  }
   
   createWindow();
   
@@ -82,6 +91,12 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
+});
+
+// Stop Grammalecte server when app is quitting
+app.on('will-quit', () => {
+  console.log('[Main] Stopping Grammalecte server...');
+  grammalecteServer.stop();
 });
 
 // IPC handlers for file operations

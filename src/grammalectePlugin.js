@@ -40,6 +40,7 @@ export class GrammalectePlugin extends Plugin {
 		this._isChecking = false;
 		this._tooltipElement = null;
 		this._clickHandler = null;
+		this._debounceTimer = null;
 	}
 
 	/**
@@ -63,6 +64,8 @@ export class GrammalectePlugin extends Plugin {
 		// Setup click handler for error suggestions (after editor is ready)
 		editor.once('ready', () => {
 			this._setupClickHandler();
+			this._setupAutoCheck();
+			this._initialCheck();
 		});
 
 	}
@@ -127,6 +130,54 @@ export class GrammalectePlugin extends Plugin {
 			});
 
 			return view;
+		});
+	}
+
+	/**
+	 * Perform initial grammar check when editor loads
+	 * Checks if there's existing content and runs spell check
+	 */
+	async _initialCheck() {
+		const editor = this.editor;
+		
+		// Small delay to ensure content is fully loaded
+		await new Promise(resolve => setTimeout(resolve, 100));
+		
+		// Check if editor has content
+		const content = editor.getData();
+		if (content && content.trim().length > 0) {
+			console.log('[Grammalecte] Running initial check on loaded content');
+			try {
+				await this.checkGrammar();
+			} catch (err) {
+				console.error('[Grammalecte] Initial check failed:', err);
+			}
+		}
+	}
+
+	/**
+	 * Setup automatic grammar checking on typing stop
+	 * Uses debounce pattern to wait for user to pause typing
+	 */
+	_setupAutoCheck() {
+		const editor = this.editor;
+		const DEBOUNCE_DELAY = 800; // ms - wait time after last keystroke
+
+		editor.model.document.on('change:data', () => {
+			// Clear any pending check
+			if (this._debounceTimer) {
+				clearTimeout(this._debounceTimer);
+			}
+
+			// Schedule new check after delay
+			this._debounceTimer = setTimeout(() => {
+				// Only check if editor is not read-only
+				if (!editor.isReadOnly) {
+					this.checkGrammar().catch(err => {
+						console.error('[Grammalecte] Auto-check failed:', err);
+					});
+				}
+			}, DEBOUNCE_DELAY);
 		});
 	}
 
@@ -340,6 +391,11 @@ export class GrammalectePlugin extends Plugin {
 	 * Extract plain text from the CKEditor model
 	 * This ensures character offsets match between what we send to Grammalecte
 	 * and what we use to find positions in the model
+	 * 
+	 * IMPORTANT: This method must:
+	 * 1. Skip widgets (images, etc.) - they have hidden fallback text that shouldn't be checked
+	 * 2. Add newlines between block elements so Grammalecte can track paragraphs with iParagraph
+	 * 
 	 * @returns {string} Plain text content
 	 */
 	_getPlainText() {
@@ -351,10 +407,60 @@ export class GrammalectePlugin extends Plugin {
 		const range = model.createRangeIn(root);
 		const walker = range.getWalker({ ignoreElementEnd: true });
 		
+		// Block elements that should be separated by newlines
+		const blockElements = new Set(['paragraph', 'heading1', 'heading2', 'heading3', 
+			'heading4', 'heading5', 'heading6', 'blockQuote', 'listItem', 'codeBlock']);
+		
 		let text = '';
+		let inWidget = false;
+		let currentBlockId = null;
+		let lastBlockId = null;
+		
 		for (const value of walker) {
-			if (value.item.is('$textProxy')) {
-				text += value.item.data;
+			const item = value.item;
+			
+			// Track entering/exiting widgets (contenteditable="false" elements)
+			if (value.type === 'elementStart') {
+				// Check if this is a widget (image, media, etc.)
+				if (item.is('element') && item.getAttribute('contenteditable') === 'false') {
+					inWidget = true;
+					continue;
+				}
+				
+				// Track block element boundaries for adding newlines
+				if (blockElements.has(item.name)) {
+					currentBlockId = item.id || `${item.name}-${text.length}`;
+					
+					// Add newline between different blocks (but not before first block)
+					if (lastBlockId !== null && currentBlockId !== lastBlockId) {
+						text += '\n';
+					}
+					lastBlockId = currentBlockId;
+				}
+			}
+			
+			if (value.type === 'elementEnd') {
+				// Exit widget
+				if (item.is('element') && item.getAttribute('contenteditable') === 'false') {
+					inWidget = false;
+					continue;
+				}
+			}
+			
+			// Skip all content inside widgets
+			if (inWidget) {
+				continue;
+			}
+			
+			// Handle soft breaks (<br> in view) - add newline
+			if (item.name === 'softBreak') {
+				text += '\n';
+				continue;
+			}
+			
+			// Add text content (only if not inside a widget)
+			if (item.is('$textProxy')) {
+				text += item.data;
 			}
 		}
 		
@@ -476,6 +582,9 @@ export class GrammalectePlugin extends Plugin {
 	/**
 	 * Find a range in the model based on character offsets
 	 * Converts character positions from Grammalecte to CKEditor model positions
+	 * IMPORTANT: Must mirror _getPlainText() logic exactly:
+	 * 1. Count newlines between block elements
+	 * 2. Skip widgets (contenteditable="false")
 	 * @param {number} startOffset - Start character offset
 	 * @param {number} endOffset - End character offset
 	 * @returns {Range|null} - Model range or null if not found
@@ -489,12 +598,57 @@ export class GrammalectePlugin extends Plugin {
 		const entireRange = model.createRangeIn(root);
 		const walker = entireRange.getWalker({ ignoreElementEnd: true });
 		
+		// Block elements that should be separated by newlines (must match _getPlainText)
+		const blockElements = new Set(['paragraph', 'heading1', 'heading2', 'heading3', 
+			'heading4', 'heading5', 'heading6', 'blockQuote', 'listItem', 'codeBlock']);
+		
 		let currentCharOffset = 0;
 		let startPosition = null;
 		let endPosition = null;
+		let inWidget = false;
+		let currentBlockId = null;
+		let lastBlockId = null;
 
 		for (const value of walker) {
 			const item = value.item;
+			
+			// Track entering widgets (contenteditable="false" elements)
+			if (value.type === 'elementStart') {
+				if (item.is('element') && item.getAttribute('contenteditable') === 'false') {
+					inWidget = true;
+					continue;
+				}
+				
+				// Track block element boundaries - count newlines between blocks
+				if (blockElements.has(item.name)) {
+					currentBlockId = item.id || `${item.name}-${currentCharOffset}`;
+					
+					// Count newline between different blocks (but not before first block)
+					if (lastBlockId !== null && currentBlockId !== lastBlockId) {
+						currentCharOffset += 1; // Count the newline character
+					}
+					lastBlockId = currentBlockId;
+				}
+			}
+			
+			// Track exiting widgets
+			if (value.type === 'elementEnd') {
+				if (item.is('element') && item.getAttribute('contenteditable') === 'false') {
+					inWidget = false;
+					continue;
+				}
+			}
+			
+			// Skip all content inside widgets
+			if (inWidget) {
+				continue;
+			}
+			
+			// Handle soft breaks - count as newline
+			if (item.name === 'softBreak') {
+				currentCharOffset += 1;
+				continue;
+			}
 			
 			if (item.is('$textProxy')) {
 				const textLength = item.data.length;
@@ -521,7 +675,6 @@ export class GrammalectePlugin extends Plugin {
 			return model.createRange(startPosition, endPosition);
 		}
 
-		console.warn('Could not create range for offsets:', startOffset, endOffset);
 		return null;
 	}
 

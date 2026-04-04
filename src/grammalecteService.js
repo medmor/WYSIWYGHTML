@@ -31,11 +31,8 @@ export class GrammalecteService {
 	 * @returns {Promise<{success: boolean, message: string}>}
 	 */
 	async startServer() {
-		console.log('[GrammalecteService] startServer() called');
 		try {
-			console.log('[GrammalecteService] Invoking grammalecte-start IPC...');
 			const result = await this.invoke('grammalecte-start');
-			console.log('[GrammalecteService] Start result:', result);
 			this.isServerRunning = result.success;
 			return result;
 		} catch (error) {
@@ -74,13 +71,7 @@ export class GrammalecteService {
 	 * @returns {Promise<{success: boolean, errors: Array, message?: string}>}
 	 */
 	async checkGrammar(text, options = {}) {
-		console.log('[GrammalecteService] checkGrammar() called');
-		console.log('[GrammalecteService] Text length:', text?.length || 0);
-		console.log('[GrammalecteService] Text preview:', text?.substring(0, 100));
-		console.log('[GrammalecteService] Server running:', this.isServerRunning);
-		
 		if (this.checkInProgress) {
-			console.log('[GrammalecteService] Check already in progress');
 			return { success: false, errors: [], message: 'A grammar check is already in progress' };
 		}
 
@@ -89,21 +80,17 @@ export class GrammalecteService {
 		try {
 			// Ensure server is running
 			if (!this.isServerRunning) {
-				console.log('[GrammalecteService] Server not running, starting...');
 				const startResult = await this.startServer();
-				console.log('[GrammalecteService] Start result:', startResult);
 				if (!startResult.success) {
 					return { success: false, errors: [], message: startResult.message };
 				}
 			}
 
-			console.log('[GrammalecteService] Sending text to IPC for checking...');
 			const result = await this.invoke('grammalecte-check', text, options);
-			console.log('[GrammalecteService] IPC result:', JSON.stringify(result, null, 2));
 			
 			// Transform the Grammalecte response to extract errors
-			const errors = this._extractErrors(result);
-			console.log('[GrammalecteService] Extracted errors:', errors.length);
+			// Pass original text to calculate correct offsets across paragraphs
+			const errors = this._extractErrors(result, text);
 			
 			return { 
 				success: result.success, 
@@ -120,20 +107,55 @@ export class GrammalecteService {
 
 	/**
 	 * Extract and normalize errors from Grammalecte response
+	 * Grammalecte splits text by newlines into paragraphs, and each paragraph's
+	 * error offsets are relative to that paragraph (starting from 0).
+	 * The iParagraph field (1-indexed) tells us which paragraph has errors.
 	 * @private
+	 * @param {Object} result - The Grammalecte result object
+	 * @param {string} originalText - The original text that was checked
+	 * @returns {Array} Array of error objects with absolute offsets
 	 */
-	_extractErrors(result) {
+	_extractErrors(result, originalText) {
 		if (!result.success || !result.result?.data) {
 			return [];
 		}
 
+		// Normalize line endings to match Grammalecte's processing
+		const normalizedText = originalText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+		
+		// Split into paragraphs (matching Grammalecte's getParagraph logic)
+		const allParagraphs = normalizedText.split('\n');
+		
+		// Build a map: paragraph index (1-indexed) -> start position in original text
+		const paragraphStarts = new Map();
+		let offset = 0;
+		
+		for (let i = 0; i < allParagraphs.length; i++) {
+			// Grammalecte uses 1-indexed paragraph numbers
+			paragraphStarts.set(i + 1, offset);
+			offset += allParagraphs[i].length + 1; // +1 for the newline
+		}
+		
 		const errors = [];
+		
+		// Process each result - it only contains paragraphs with errors
 		for (const paragraph of result.result.data) {
+			// iParagraph tells us which paragraph this is (1-indexed)
+			const paragraphIndex = paragraph.iParagraph;
+			const paragraphStart = paragraphStarts.get(paragraphIndex);
+			
+			if (paragraphStart === undefined) {
+				continue;
+			}
+			
 			if (paragraph.lGrammarErrors) {
 				for (const err of paragraph.lGrammarErrors) {
+					const absStart = err.nStart + paragraphStart;
+					const absEnd = err.nEnd + paragraphStart;
+					
 					errors.push({
-						start: err.nStart,
-						end: err.nEnd,
+						start: absStart,
+						end: absEnd,
 						message: err.sMessage,
 						suggestions: err.aSuggestions || [],
 						type: err.sType,
@@ -142,11 +164,15 @@ export class GrammalecteService {
 					});
 				}
 			}
+			
 			if (paragraph.lSpellingErrors) {
 				for (const err of paragraph.lSpellingErrors) {
+					const absStart = err.nStart + paragraphStart;
+					const absEnd = err.nEnd + paragraphStart;
+					
 					errors.push({
-						start: err.nStart,
-						end: err.nEnd,
+						start: absStart,
+						end: absEnd,
 						message: err.sMessage || 'Spelling error',
 						suggestions: err.aSuggestions || [],
 						type: 'spelling',
@@ -155,6 +181,7 @@ export class GrammalecteService {
 				}
 			}
 		}
+		
 		return errors;
 	}
 

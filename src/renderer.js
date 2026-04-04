@@ -74,6 +74,9 @@ import { AIFeatures } from './aiFeatures.js';
 import { paginationManager } from './pagination.js';
 import './pagination.css';
 
+// Grammalecte grammar checking
+import { GrammalectePlugin } from './grammalectePlugin.js';
+
 // UI Components
 import { createNavbarHTML, initNavbar } from './components/navbar.js';
 
@@ -88,6 +91,8 @@ const editorConfig = {
 			'|',
 			'showBlocks',
 			'fullscreen',
+			'|',
+			'grammalecteCheck',
 			'|',
 			'heading',
 			'style',
@@ -145,6 +150,7 @@ const editorConfig = {
 		FontSize,
 		Fullscreen,
 		GeneralHtmlSupport,
+		GrammalectePlugin,
 		Heading,
 		HorizontalLine,
 		HtmlComment,

@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const store = require('./store');
+const { grammalecteServer } = require('./grammalecte-server');
 
 let mainWindow;
 let previewWindow = null;
@@ -273,5 +274,82 @@ ipcMain.on('print-from-preview', (event) => {
 ipcMain.on('refresh-preview', (event, data) => {
   if (previewWindow && !previewWindow.isDestroyed()) {
     previewWindow.webContents.send('refresh-preview-content', data);
+  }
+});
+
+// ============================================
+// Grammalecte Grammar Checker IPC Handlers
+// ============================================
+
+// Start Grammalecte server
+ipcMain.handle('grammalecte-start', async (event) => {
+  console.log('[Main] grammalecte-start IPC handler called');
+  try {
+    console.log('[Main] Starting grammalecte server on port 8085...');
+    await grammalecteServer.start(8085);
+    console.log('[Main] Grammalecte server started successfully');
+    return { success: true };
+  } catch (err) {
+    console.error('[Main] Failed to start Grammalecte:', err);
+    return { success: false, error: err.message };
+  }
+});
+
+// Stop Grammalecte server
+ipcMain.handle('grammalecte-stop', async (event) => {
+  try {
+    grammalecteServer.stop();
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+// Check grammar for text
+ipcMain.handle('grammalecte-check', async (event, text, options) => {
+  console.log('[Main] grammalecte-check IPC handler called');
+  console.log('[Main] Text length:', text?.length || 0);
+  console.log('[Main] Text preview:', text?.substring(0, 100));
+  try {
+    console.log('[Main] Calling grammalecteServer.checkGrammar()...');
+    const result = await grammalecteServer.checkGrammar(text, options);
+    console.log('[Main] Check result:', JSON.stringify(result, null, 2));
+    return { success: true, result };
+  } catch (err) {
+    console.error('[Main] Grammalecte check failed:', err);
+    return { success: false, error: err.message };
+  }
+});
+
+// Get spelling suggestions for a word
+ipcMain.handle('grammalecte-suggest', async (event, word) => {
+  try {
+    const result = await grammalecteServer.getSuggestions(word);
+    return { success: true, result };
+  } catch (err) {
+    console.error('[Grammalecte] Suggestion failed:', err);
+    return { success: false, error: err.message };
+  }
+});
+
+// Get grammar options
+ipcMain.handle('grammalecte-get-options', async (event) => {
+  try {
+    const result = await grammalecteServer.getOptions();
+    return { success: true, result };
+  } catch (err) {
+    console.error('[Grammalecte] Get options failed:', err);
+    return { success: false, error: err.message };
+  }
+});
+
+// Set grammar options
+ipcMain.handle('grammalecte-set-options', async (event, options) => {
+  try {
+    const result = await grammalecteServer.setOptions(options);
+    return { success: true, result };
+  } catch (err) {
+    console.error('[Grammalecte] Set options failed:', err);
+    return { success: false, error: err.message };
   }
 });

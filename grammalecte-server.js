@@ -199,24 +199,11 @@ class GrammalecteServer {
    * @returns {Promise<object>} - Grammar check results with errors
    */
   async checkGrammar(text, options = null) {
-    console.log('[GrammalecteServer] checkGrammar() called');
-    console.log('[GrammalecteServer] Text length:', text?.length || 0);
-    console.log('[GrammalecteServer] Text preview:', text?.substring(0, 100));
-    console.log('[GrammalecteServer] Server running:', this.isRunning);
-    
     const data = { text };
     if (options) {
       data.options = JSON.stringify(options);
     }
-    console.log('[GrammalecteServer] Making HTTP request to /gc_text/fr...');
-    try {
-      const result = await this.makeRequest('/gc_text/fr', 'POST', data);
-      console.log('[GrammalecteServer] Response:', JSON.stringify(result, null, 2));
-      return result;
-    } catch (err) {
-      console.error('[GrammalecteServer] Request failed:', err);
-      throw err;
-    }
+    return this.makeRequest('/gc_text/fr', 'POST', data);
   }
 
   /**

@@ -146,12 +146,7 @@ export class GrammalectePlugin extends Plugin {
 		// Check if editor has content
 		const content = editor.getData();
 		if (content && content.trim().length > 0) {
-			console.log('[Grammalecte] Running initial check on loaded content');
-			try {
-				await this.checkGrammar();
-			} catch (err) {
-				console.error('[Grammalecte] Initial check failed:', err);
-			}
+			this.checkGrammar().catch(() => {});
 		}
 	}
 
@@ -173,9 +168,7 @@ export class GrammalectePlugin extends Plugin {
 			this._debounceTimer = setTimeout(() => {
 				// Only check if editor is not read-only
 				if (!editor.isReadOnly) {
-					this.checkGrammar().catch(err => {
-						console.error('[Grammalecte] Auto-check failed:', err);
-					});
+					this.checkGrammar().catch(() => {});
 				}
 			}, DEBOUNCE_DELAY);
 		});

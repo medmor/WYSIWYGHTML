@@ -587,3 +587,42 @@
 	flex: 1;
 	min-width: 0;
 }
+
+/* Grammalecte error marker styles */
+.grammalecte-error {
+	cursor: pointer;
+	position: relative;
+}
+
+.spelling-error {
+	background-color: rgba(255, 0, 0, 0.2);
+	background-image: linear-gradient(to bottom, transparent 0%, transparent 80%, rgba(255, 0, 0, 0.8) 80%, rgba(255, 0, 0, 0.8) 100%);
+	background-size: 2px 6px;
+	background-repeat: repeat-x;
+	background-position: bottom;
+	text-decoration-line: underline;
+	text-decoration-style: wavy;
+	text-decoration-color: rgba(255, 0, 0, 0.8);
+}
+
+.grammar-error {
+	background-color: rgba(0, 100, 255, 0.2);
+	background-image: linear-gradient(to bottom, transparent 0%, transparent 80%, rgba(0, 100, 255, 0.8) 80%, rgba(0, 100, 255, 0.8) 100%);
+	background-size: 2px 6px;
+	background-repeat: repeat-x;
+	background-position: bottom;
+	text-decoration-line: underline;
+	text-decoration-style: wavy;
+	text-decoration-color: rgba(0, 100, 255, 0.8);
+}
+
+/* Dark mode error marker styles */
+[data-theme="dark"] .spelling-error {
+	background-color: rgba(255, 100, 100, 0.3);
+	text-decoration-color: rgba(255, 100, 100, 0.9);
+}
+
+[data-theme="dark"] .grammar-error {
+	background-color: rgba(100, 150, 255, 0.3);
+	text-decoration-color: rgba(100, 150, 255, 0.9);
+}

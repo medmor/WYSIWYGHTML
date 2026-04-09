@@ -77,27 +77,32 @@ export class GrammalectePlugin extends Plugin {
 		const editor = this.editor;
 		const plugin = this;
 
-		// Use markerToHighlight which handles markers with namespaced names
+		// Use markerToElement to create view elements with custom attributes
 		// CKEditor 5 uses colon separator for namespaced events:
 		// - model: 'grammalecte-error' listens for 'addMarker:grammalecte-error' events
 		// - This catches markers named 'grammalecte-error', 'grammalecte-error:123', 'grammalecte-error:type:id', etc.
 		// - IMPORTANT: Marker names MUST use colon after the model name (e.g., 'grammalecte-error:test-123')
-		editor.conversion.for('editingDowncast').markerToHighlight({
+		editor.conversion.for('editingDowncast').markerToElement({
 			model: 'grammalecte-error',
-			view: (data) => {
+			view: (data, { writer }) => {
 				// data.markerName contains the full marker name
 				const markerName = data.markerName;
+				console.log('[Plugin] Marker conversion called for:', markerName);
 				const errorData = plugin._errors.get(markerName) || {};
+				console.log('[Plugin] Error data for conversion:', errorData);
 				const errorType = plugin._getErrorType(errorData.type || 'typo');
+				console.log('[Plugin] Error type:', errorType);
 
-				return {
-					classes: [errorType.className, 'grammalecte-error'],
-					attributes: {
-						'data-error-id': markerName,
-						'data-error-message': errorData.message || '',
-						title: errorType.title
-					}
-				};
+				// Create a span element with classes and attributes
+				const span = writer.createContainerElement('span', {
+					class: `${errorType.className} grammalecte-error`,
+					'data-error-id': markerName,
+					'data-error-message': errorData.message || '',
+					title: errorType.title
+				});
+
+				console.log('[Plugin] Created span element:', span);
+				return span;
 			},
 			converterPriority: 'high'
 		});
@@ -138,6 +143,7 @@ export class GrammalectePlugin extends Plugin {
 	 * Checks if there's existing content and runs spell check
 	 */
 	async _initialCheck() {
+		console.log('[Plugin] _initialCheck() called');
 		const editor = this.editor;
 		
 		// Small delay to ensure content is fully loaded
@@ -145,8 +151,15 @@ export class GrammalectePlugin extends Plugin {
 		
 		// Check if editor has content
 		const content = editor.getData();
+		console.log('[Plugin] Content after 100ms delay:', content?.substring(0, 100));
+		console.log('[Plugin] Content length:', content?.length || 0);
 		if (content && content.trim().length > 0) {
-			this.checkGrammar().catch(() => {});
+			console.log('[Plugin] Calling checkGrammar()...');
+			this.checkGrammar().catch(err => {
+				console.error('[Plugin] Initial check failed:', err);
+			});
+		} else {
+			console.log('[Plugin] No content to check');
 		}
 	}
 
@@ -155,10 +168,12 @@ export class GrammalectePlugin extends Plugin {
 	 * Uses debounce pattern to wait for user to pause typing
 	 */
 	_setupAutoCheck() {
+		console.log('[Plugin] _setupAutoCheck() called');
 		const editor = this.editor;
 		const DEBOUNCE_DELAY = 800; // ms - wait time after last keystroke
 
 		editor.model.document.on('change:data', () => {
+			console.log('[Plugin] Document changed, debouncing...');
 			// Clear any pending check
 			if (this._debounceTimer) {
 				clearTimeout(this._debounceTimer);
@@ -166,9 +181,15 @@ export class GrammalectePlugin extends Plugin {
 
 			// Schedule new check after delay
 			this._debounceTimer = setTimeout(() => {
+				console.log('[Plugin] Debounce timer fired, checking if editor is ready...');
 				// Only check if editor is not read-only
 				if (!editor.isReadOnly) {
-					this.checkGrammar().catch(() => {});
+					console.log('[Plugin] Calling checkGrammar() from debounce...');
+					this.checkGrammar().catch(err => {
+						console.error('[Plugin] Auto check failed:', err);
+					});
+				} else {
+					console.log('[Plugin] Editor is read-only, skipping check');
 				}
 			}, DEBOUNCE_DELAY);
 		});
@@ -224,12 +245,17 @@ export class GrammalectePlugin extends Plugin {
 	 * Show suggestions tooltip for an error
 	 */
 	_showSuggestions(domElement) {
+		console.log('[Plugin] _showSuggestions() called');
 		this._hideTooltip();
 
 		const errorInfo = this._getErrorForElement(domElement);
+		console.log('[Plugin] Error info found:', errorInfo);
 		if (!errorInfo) {
+			console.warn('[Plugin] No error info found for element');
 			return;
 		}
+		console.log('[Plugin] Showing suggestions for error:', errorInfo.message);
+		console.log('[Plugin] Suggestions count:', errorInfo.suggestions?.length || 0);
 
 		const tooltip = document.createElement('div');
 		tooltip.className = 'grammalecte-error-tooltip';
@@ -292,17 +318,22 @@ export class GrammalectePlugin extends Plugin {
 	 */
 	_getErrorForElement(domElement) {
 		// Find the error by checking data-error-id attribute
+		console.log('[Plugin] _getErrorForElement() called');
+		console.log('[Plugin] Errors map size:', this._errors.size);
 		let element = domElement;
 		
 		// Walk up the DOM tree to find an element with data-error-id
 		while (element) {
 			const errorId = element.getAttribute?.('data-error-id');
+			console.log('[Plugin] Checking element, errorId:', errorId);
 			if (errorId && this._errors.has(errorId)) {
+				console.log('[Plugin] Found error in map:', errorId);
 				return this._errors.get(errorId);
 			}
 			element = element.parentElement;
 		}
 		
+		console.warn('[Plugin] No error found for element');
 		return null;
 	}
 
@@ -464,34 +495,49 @@ export class GrammalectePlugin extends Plugin {
 	 * Check text for grammar errors
 	 */
 	async checkGrammar() {
+		console.log('[Plugin] checkGrammar() called');
 		if (this._isChecking) {
+			console.log('[Plugin] Check already in progress, skipping...');
 			return;
 		}
 
 		this._isChecking = true;
+		console.log('[Plugin] Starting grammar check...');
 
 		try {
 			const editor = this.editor;
 			
 			// Get plain text from model (not HTML) - offsets will match model positions
 			const plainText = this._getPlainText();
+			console.log('[Plugin] Plain text length:', plainText.length);
+			console.log('[Plugin] Plain text preview:', plainText.substring(0, 100));
 
 			// Clear previous errors
+			console.log('[Plugin] Clearing previous errors...');
 			this._clearErrors();
 
 			// Check grammar with plain text
+			console.log('[Plugin] Calling grammalecteService.checkGrammar()...');
 			const result = await grammalecteService.checkGrammar(plainText);
+			console.log('[Plugin] Check result:', result);
+			console.log('[Plugin] Success:', result.success);
+			console.log('[Plugin] Errors found:', result.errors?.length || 0);
 
 			if (result.success && result.errors && result.errors.length > 0) {
+				console.log('[Plugin] Adding error markers...');
 				await this._addErrorMarkers(result.errors);
+				console.log('[Plugin] Error markers added');
+			} else {
+				console.log('[Plugin] No errors to mark');
 			}
 
 			return result;
 		} catch (error) {
-			console.error('Grammar check failed:', error);
+			console.error('[Plugin] Grammar check failed:', error);
 			throw error;
 		} finally {
 			this._isChecking = false;
+			console.log('[Plugin] checkGrammar() finished');
 		}
 	}
 
@@ -499,16 +545,19 @@ export class GrammalectePlugin extends Plugin {
 	 * Add error markers to the editor
 	 */
 	async _addErrorMarkers(errors) {
+		console.log('[Plugin] _addErrorMarkers() called with', errors.length, 'errors');
 		const editor = this.editor;
 		const model = editor.model;
 		
 		let addedCount = 0;
 		
 		for (const error of errors) {
+			console.log('[Plugin] Processing error:', error.message, 'at', error.start, '-', error.end);
 			try {
 				const range = this._findTextRange(error.start, error.end);
 				
 				if (range) {
+					console.log('[Plugin] Found range for error');
 					// Use COLON separator for CKEditor namespaced marker matching
 					const errorId = `grammalecte-error:${Date.now()}-${addedCount}`;
 					
@@ -520,6 +569,7 @@ export class GrammalectePlugin extends Plugin {
 						type: error.type || 'typo',
 						id: errorId
 					});
+					console.log('[Plugin] Stored error info:', errorId, 'with', error.suggestions?.length || 0, 'suggestions');
 					
 					editor.model.change(writer => {
 						writer.addMarker(errorId, {
@@ -528,13 +578,16 @@ export class GrammalectePlugin extends Plugin {
 							affectsData: false
 						});
 					});
-					
+					console.log('[Plugin] Added marker:', errorId);
 					addedCount++;
+				} else {
+					console.warn('[Plugin] Could not find range for error at', error.start, '-', error.end);
 				}
 			} catch (e) {
-				console.error('Failed to add marker:', e);
+				console.error('[Plugin] Failed to add marker:', e);
 			}
 		}
+		console.log('[Plugin] Added', addedCount, 'markers out of', errors.length, 'errors');
 	}
 
 

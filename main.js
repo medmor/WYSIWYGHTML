@@ -2,7 +2,7 @@ const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const store = require('./store');
-const { grammalecteServer } = require('./grammalecte-server');
+const { grammalecteWrapper } = require('./grammalecte-wrapper');
 
 let mainWindow;
 let previewWindow = null;
@@ -65,13 +65,13 @@ app.whenReady().then(async () => {
   store.loadState();
   currentFilePath = store.get('lastFilePath');
   
-  // Start Grammalecte server automatically
+  // Initialize Grammalecte wrapper automatically
   try {
-    console.log('[Main] Starting Grammalecte server...');
-    await grammalecteServer.start(8085);
-    console.log('[Main] Grammalecte server started successfully');
+    console.log('[Main] Initializing Grammalecte...');
+    await grammalecteWrapper.load();
+    console.log('[Main] Grammalecte initialized successfully');
   } catch (err) {
-    console.error('[Main] Failed to start Grammalecte server:', err);
+    console.error('[Main] Failed to initialize Grammalecte:', err);
   }
   
   createWindow();
@@ -93,10 +93,9 @@ app.on('window-all-closed', () => {
   }
 });
 
-// Stop Grammalecte server when app is quitting
+// Clean up when app is quitting
 app.on('will-quit', () => {
-  console.log('[Main] Stopping Grammalecte server...');
-  grammalecteServer.stop();
+  console.log('[Main] App quitting, cleanup complete');
 });
 
 // IPC handlers for file operations
@@ -296,24 +295,24 @@ ipcMain.on('refresh-preview', (event, data) => {
 // Grammalecte Grammar Checker IPC Handlers
 // ============================================
 
-// Start Grammalecte server
+// Initialize Grammalecte (no server needed, uses JavaScript API directly)
 ipcMain.handle('grammalecte-start', async (event) => {
   console.log('[Main] grammalecte-start IPC handler called');
   try {
-    console.log('[Main] Starting grammalecte server on port 8085...');
-    await grammalecteServer.start(8085);
-    console.log('[Main] Grammalecte server started successfully');
+    console.log('[Main] Initializing Grammalecte JavaScript API...');
+    await grammalecteWrapper.load();
+    console.log('[Main] Grammalecte initialized successfully');
     return { success: true };
   } catch (err) {
-    console.error('[Main] Failed to start Grammalecte:', err);
+    console.error('[Main] Failed to initialize Grammalecte:', err);
     return { success: false, error: err.message };
   }
 });
 
-// Stop Grammalecte server
+// Stop Grammalecte (no-op for JavaScript API)
 ipcMain.handle('grammalecte-stop', async (event) => {
   try {
-    grammalecteServer.stop();
+    // No cleanup needed for JavaScript API
     return { success: true };
   } catch (err) {
     return { success: false, error: err.message };
@@ -326,10 +325,10 @@ ipcMain.handle('grammalecte-check', async (event, text, options) => {
   console.log('[Main] Text length:', text?.length || 0);
   console.log('[Main] Text preview:', text?.substring(0, 100));
   try {
-    console.log('[Main] Calling grammalecteServer.checkGrammar()...');
-    const result = await grammalecteServer.checkGrammar(text, options);
+    console.log('[Main] Calling grammalecteWrapper.checkGrammar()...');
+    const result = await grammalecteWrapper.checkGrammar(text, options);
     console.log('[Main] Check result:', JSON.stringify(result, null, 2));
-    return { success: true, result };
+    return result;
   } catch (err) {
     console.error('[Main] Grammalecte check failed:', err);
     return { success: false, error: err.message };
@@ -339,8 +338,8 @@ ipcMain.handle('grammalecte-check', async (event, text, options) => {
 // Get spelling suggestions for a word
 ipcMain.handle('grammalecte-suggest', async (event, word) => {
   try {
-    const result = await grammalecteServer.getSuggestions(word);
-    return { success: true, result };
+    const result = await grammalecteWrapper.getSuggestions(word);
+    return result;
   } catch (err) {
     console.error('[Grammalecte] Suggestion failed:', err);
     return { success: false, error: err.message };
@@ -350,8 +349,8 @@ ipcMain.handle('grammalecte-suggest', async (event, word) => {
 // Get grammar options
 ipcMain.handle('grammalecte-get-options', async (event) => {
   try {
-    const result = await grammalecteServer.getOptions();
-    return { success: true, result };
+    const result = await grammalecteWrapper.getOptions();
+    return result;
   } catch (err) {
     console.error('[Grammalecte] Get options failed:', err);
     return { success: false, error: err.message };
@@ -361,8 +360,8 @@ ipcMain.handle('grammalecte-get-options', async (event) => {
 // Set grammar options
 ipcMain.handle('grammalecte-set-options', async (event, options) => {
   try {
-    const result = await grammalecteServer.setOptions(options);
-    return { success: true, result };
+    const result = await grammalecteWrapper.setOptions(options);
+    return result;
   } catch (err) {
     console.error('[Grammalecte] Set options failed:', err);
     return { success: false, error: err.message };

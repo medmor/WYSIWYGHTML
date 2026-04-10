@@ -115,16 +115,13 @@
     
     // Wait for DOM to be ready
     document.addEventListener('DOMContentLoaded', () => {
-      console.log('[Print Preview] DOM ready, setting up event listeners');
       
       // Save to PDF button
       const savePdfBtn = document.getElementById('save-pdf-btn');
       if (savePdfBtn) {
         savePdfBtn.addEventListener('click', async () => {
-          console.log('[Print Preview] Save to PDF button clicked');
           try {
             const result = await ipcRenderer.invoke('save-to-pdf');
-            console.log('[Print Preview] Save result:', result);
             if (result.success) {
               alert('PDF enregistré: ' + result.filePath);
             } else if (result.error !== 'Cancelled') {
@@ -135,13 +132,11 @@
             alert('Erreur: ' + err.message);
           }
         });
-        console.log('[Print Preview] Event listener attached to save-pdf button');
       }
     });
     
     // Handle content from main window
     ipcRenderer.on('print-content', (event, data) => {
-      console.log('[Print Preview] Received content');
       const contentDiv = document.getElementById('print-content');
       
       // Set content

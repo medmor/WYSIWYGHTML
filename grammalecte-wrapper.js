@@ -24,14 +24,11 @@ class GrammalecteWrapper {
     }
 
     try {
-      console.log('[GrammalecteWrapper] Initializing GrammarChecker...');
       this.checker = new GrammarChecker(null, "fr", "Javascript");
       
-      console.log('[GrammalecteWrapper] Loading Grammalecte...');
       this.checker.load(["Grammalecte"]);
       
       this.isLoaded = true;
-      console.log('[GrammalecteWrapper] ✓ Grammalecte loaded successfully');
     } catch (error) {
       console.error('[GrammalecteWrapper] Failed to load:', error);
       throw error;
@@ -58,7 +55,6 @@ class GrammalecteWrapper {
     await this.ensureLoaded();
 
     try {
-      console.log('[GrammalecteWrapper] Checking grammar for text length:', text.length);
       
       // Normalize text and split into paragraphs
       const normalizedText = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
@@ -89,7 +85,6 @@ class GrammalecteWrapper {
         }
       }
       
-      console.log('[GrammalecteWrapper] Check completed, found', allResults.length, 'issues');
       
       const transformedResults = this._transformResults(allResults, text);
       
@@ -187,7 +182,6 @@ class GrammalecteWrapper {
     await this.ensureLoaded();
 
     try {
-      console.log('[GrammalecteWrapper] Getting suggestions for:', word);
       
       // Use the suggest method from GrammarChecker
       const suggestions = this.checker.suggest(word, 5);

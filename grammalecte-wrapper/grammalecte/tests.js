@@ -176,7 +176,6 @@ class TestGrammarChecking {
                 // Warning! JS sucks: infinite loop if writing directly /\{\{.+?\}\}/g.exec(sLine)
                 // lines below to remove when I know why.
                 if (i > 10) {
-                    console.log("\ninfinite loop?\nline:"+sLine+"\nm: "+ m.toString());
                     break;
                 }
             }

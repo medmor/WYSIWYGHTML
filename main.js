@@ -67,9 +67,7 @@ app.whenReady().then(async () => {
   
   // Initialize Grammalecte wrapper automatically
   try {
-    console.log('[Main] Initializing Grammalecte...');
     await grammalecteWrapper.load();
-    console.log('[Main] Grammalecte initialized successfully');
   } catch (err) {
     console.error('[Main] Failed to initialize Grammalecte:', err);
   }
@@ -95,7 +93,6 @@ app.on('window-all-closed', () => {
 
 // Clean up when app is quitting
 app.on('will-quit', () => {
-  console.log('[Main] App quitting, cleanup complete');
 });
 
 // IPC handlers for file operations
@@ -206,7 +203,6 @@ ipcMain.on('show-pdf-export', (event, data) => {
 
   // Wait for window to load, then send content
   pdfWindow.webContents.once('did-finish-load', () => {
-    console.log('[Main] PDF window finished loading, sending content');
     pdfWindow.webContents.send('print-content', {
       content: data.content,
       styles: data.styles,
@@ -221,10 +217,8 @@ ipcMain.on('show-pdf-export', (event, data) => {
 
 // Save to PDF directly
 ipcMain.handle('save-to-pdf', async (event) => {
-  console.log('[Main] ========== save-to-pdf invoked ==========');
   
   if (!pdfWindow || pdfWindow.isDestroyed()) {
-    console.log('[Main] Cannot save - window not available');
     return { success: false, error: 'Window not available' };
   }
 
@@ -255,7 +249,6 @@ ipcMain.handle('save-to-pdf', async (event) => {
     
     const fs = require('fs');
     fs.writeFileSync(filePath, pdfData);
-    console.log('[Main] PDF saved to:', filePath);
     
     return { success: true, filePath };
   } catch (err) {
@@ -297,11 +290,8 @@ ipcMain.on('refresh-preview', (event, data) => {
 
 // Initialize Grammalecte (no server needed, uses JavaScript API directly)
 ipcMain.handle('grammalecte-start', async (event) => {
-  console.log('[Main] grammalecte-start IPC handler called');
   try {
-    console.log('[Main] Initializing Grammalecte JavaScript API...');
     await grammalecteWrapper.load();
-    console.log('[Main] Grammalecte initialized successfully');
     return { success: true };
   } catch (err) {
     console.error('[Main] Failed to initialize Grammalecte:', err);
@@ -321,13 +311,8 @@ ipcMain.handle('grammalecte-stop', async (event) => {
 
 // Check grammar for text
 ipcMain.handle('grammalecte-check', async (event, text, options) => {
-  console.log('[Main] grammalecte-check IPC handler called');
-  console.log('[Main] Text length:', text?.length || 0);
-  console.log('[Main] Text preview:', text?.substring(0, 100));
   try {
-    console.log('[Main] Calling grammalecteWrapper.checkGrammar()...');
     const result = await grammalecteWrapper.checkGrammar(text, options);
-    console.log('[Main] Check result:', JSON.stringify(result, null, 2));
     return result;
   } catch (err) {
     console.error('[Main] Grammalecte check failed:', err);

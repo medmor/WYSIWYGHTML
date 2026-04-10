@@ -39,7 +39,6 @@ class GrammarChecker {
         // => sorte de gestionnaire de dépendence (peut être amélioré)
         this.isInit = {};
         if ( aInit.indexOf("Grammalecte") !== -1 ){
-            //console.log('init Grammalecte');
             this._oGce = require(this.sPathRoot + "/fr/gc_engine.js");
             this._oGce.load(this.sContext);
             this.isInit.Grammalecte = true;
@@ -50,7 +49,6 @@ class GrammarChecker {
         }
 
         if ( !this.isInit.Graphspell && (aInit.indexOf("Graphspell") !== -1 || aInit.indexOf("Lexicographer") !== -1)){
-            //console.log('init Graphspell');
             this._SpellChecker = require(this.sPathRoot + "/graphspell/spellchecker.js");
             this.oSpellChecker = new this._SpellChecker.SpellChecker(this.sLangCode, this.sPathRoot + "/graphspell/_dictionaries");
             this.isInit.Graphspell = true;
@@ -59,21 +57,18 @@ class GrammarChecker {
         }
 
         if ( !this.isInit.Tokenizer && aInit.indexOf("Tokenizer") !== -1 ){
-            //console.log('init Tokenizer');
             this._Tokenizer = require(this.sPathRoot + "/graphspell/tokenizer.js");
             this.oTokenizer = new this._Tokenizer.Tokenizer(this.sLangCode);
             this.isInit.Tokenizer = true;
         }
 
         if ( aInit.indexOf("TextFormatter") !== -1 ){
-            //console.log('init TextFormatter');
             this._oText = require(this.sPathRoot + "/fr/textformatter.js");
             this.oTextFormatter = new this._oText.TextFormatter();
             this.isInit.TextFormatter = true;
         }
 
         if ( aInit.indexOf("Lexicographer") !== -1 ){
-            //console.log('init Lexicographer');
             this._oLex = require(this.sPathRoot + "/fr/lexicographe.js");
             this.oLexicographer = new this._oLex.Lexicographe(
                 this.oSpellChecker,

@@ -88,7 +88,6 @@ class DAWG {
     */
 
     constructor (lEntrySrc, cStemming, sLangCode, sLangName="", sDicName="", sDescription="", xProgressBarNode=null) {
-        console.log("===== Direct Acyclic Word Graph - Minimal Acyclic Finite State Automaton =====");
         let funcStemmingGen = null;
         switch (cStemming.toUpperCase()) {
             case "A":
@@ -150,7 +149,6 @@ class DAWG {
         // then we transform items in list a new.
 
         // Preparing DAWG
-        console.log(" > Preparing list of words");
         let lVal = lChar.concat(lAff).concat(lTag);
         let lWord = [];
         for (let [sFlex, iAff, iTag] of lEntry) {
@@ -293,7 +291,6 @@ class DAWG {
     }
 
     sortNodeArcs (dValOccur) {
-        console.log(" > Sort node arcs");
         this.oRoot.sortArcs(dValOccur);
         for (let oNode of this.dMinimizedNodes.values()) {
             oNode.sortArcs(dValOccur);
@@ -337,15 +334,17 @@ class DAWG {
     }
 
     displayInfo () {
-        console.log("Entries: " + this.nEntry);
-        console.log("Characters: " + this.nChar);
-        console.log("Affixes: " + this.nAff);
-        console.log("Tags: " + this.nTag);
-        console.log("Arc values: " + this.nArcVal);
-        console.log("Nodes: " + this.nNode);
-        console.log("Arcs: " + this.nArc);
-        console.log("2grams: " + this.a2grams.size);
-        console.log("Stemming: " + this.cStemming + "FX");
+        return {
+            entries: this.nEntry,
+            characters: this.nChar,
+            affixes: this.nAff,
+            tags: this.nTag,
+            arcValues: this.nArcVal,
+            nodes: this.nNode,
+            arcs: this.nArc,
+            twoGrams: this.a2grams.size,
+            stemming: this.cStemming + "FX"
+        };
     }
 
     getArcStats () {
@@ -362,13 +361,13 @@ class DAWG {
     }
 
     writeInfo () {
-        console.log(this.getArcStats());
-        console.log("\n * Values:\n");
         let i = 0;
+        let lResult = [];
         for (let s of this.lArcVal) {
-            console.log(i + ": " + s);
+            lResult.push(i + ": " + s);
             i++;
         }
+        return this.getArcStats() + "\n * Values:\n" + lResult.join("\n");
     }
 
     * select (sPattern="") {
@@ -379,8 +378,7 @@ class DAWG {
                 zPattern = new RegExp(sPattern);
             }
             catch (e) {
-                console.log("Error in regex pattern");
-                console.log(e.message);
+                console.error("Error in regex pattern:", e.message);
             }
         }
         yield* this._select(zPattern, this.oRoot, "");
@@ -405,7 +403,6 @@ class DAWG {
 
     // BINARY CONVERSION
     _calculateBinary () {
-        console.log("Write DAWG as an indexable binary dictionary");
         this.nBytesArc = Math.floor( (this.nArcVal.toString(2).length + 2) / 8 ) + 1;     // We add 2 bits. See DawgNode.convToBytes()
         this.nBytesOffset = 0;
         this._calcNumBytesNodeAddress();
@@ -414,9 +411,6 @@ class DAWG {
         for (let oNode of this.dMinimizedNodes.values()) {
             this.sByDic += oNode.convToBytes(this.nBytesArc, this.nBytesNodeAddress);
         }
-        console.log("Arc values (chars, affixes and tags): " + this.nArcVal);
-        console.log("Arc size: "+this.nBytesArc+" bytes, Address size: "+this.nBytesNodeAddress+" bytes");
-        console.log("-> " + this.nBytesArc+this.nBytesNodeAddress + " * " + this.nArc + " = " + (this.nBytesArc+this.nBytesNodeAddress)*this.nArc + " bytes");
     }
 
     _calcNumBytesNodeAddress () {
@@ -572,7 +566,6 @@ class DawgNode {
         for (let arc of this.arcs.keys()) {
             sResult += "    ".repeat(nTab) + lArcVal[arc] + "\n";
         }
-        console.log(sResult);
         if (bRecur) {
             for (let oNode of this.arcs.values()) {
                 oNode.display(nTab+1, lArcVal, bRecur);
@@ -679,6 +672,6 @@ function displayCharOrder () {
         for (let [c, n] of lTemp) {
             s += c+":"+n+", ";
         }
-        console.log(s);
+        return s;
     }
 }

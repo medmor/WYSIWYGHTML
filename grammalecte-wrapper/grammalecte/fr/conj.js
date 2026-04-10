@@ -237,7 +237,7 @@ var conj = {
             }
         }
         catch (e) {
-            console.log(e);
+            console.error(e);
             return "## erreur, code : " + sSfx + " ##";
         }
     }
@@ -667,7 +667,7 @@ if(!conj.bInit && typeof(process) !== 'undefined') {
     // WebExtension Chrome (but not in Worker)
     conj.init(helpers.loadFile(chrome.runtime.getURL("grammalecte/fr/conj_data.json")));
 } else if (conj.bInit){
-    console.log("Module conj déjà initialisé");
+    // already initialized
 } else {
     //console.log("Module conj non initialisé");
 }

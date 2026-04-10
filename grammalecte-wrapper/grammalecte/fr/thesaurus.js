@@ -127,7 +127,7 @@ if (!thesaurus.bInit && typeof(process) !== 'undefined') {
     // WebExtension Chrome (but not in Worker)
     thesaurus.init(helpers.loadFile(chrome.runtime.getURL("grammalecte/fr/thesaurus1_data.json")), helpers.loadFile(chrome.runtime.getURL("grammalecte/fr/thesaurus2_data.json")));
 } else if (thesaurus.bInit){
-    console.log("Module thesaurus déjà initialisé");
+    // already initialized
 } else {
     //console.log("Module thesaurus non initialisé");
 }

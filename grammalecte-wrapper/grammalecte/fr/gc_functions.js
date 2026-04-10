@@ -226,7 +226,6 @@ function option (sOpt) {
 }
 
 function echo (x) {
-    console.log(x);
     return true;
 }
 
@@ -314,18 +313,12 @@ function look (s, sPattern, sNegPattern=null) {
 function info (dTokenPos, aWord) {
     // for debugging: info of word
     if (!aWord) {
-        console.log("> nothing to find");
         return true;
     }
     let lMorph = _oSpellChecker.getMorph(aWord[1]);
     if (lMorph.length === 0) {
-        console.log("> not in dictionary");
         return true;
     }
-    if (dTokenPos.has(aWord[0])) {
-        console.log("DA: " + dTokenPos.get(aWord[0]));
-    }
-    console.log("FSA: " + lMorph);
     return true;
 }
 
@@ -578,7 +571,7 @@ function select (dTokenPos, nPos, sWord, sPattern, sNegPattern="") {
         return true;
     }
     if (!dTokenPos.has(nPos)) {
-        console.log("Error. There should be a token at this position: ", nPos);
+        console.error("There should be a token at position:", nPos);
         return true;
     }
     let lMorph = _oSpellChecker.getMorph(sWord);
@@ -598,7 +591,7 @@ function select (dTokenPos, nPos, sWord, sPattern, sNegPattern="") {
         lSelect = lMorph.filter( sMorph => sMorph.search(sNegPattern) === -1 );
     }
     else {
-        console.log("[Grammalecte] Error: missing pattern for disambiguation selection...");
+        console.error("Missing pattern for disambiguation selection...");
         return true;
     }
     if (lSelect.length > 0 && lSelect.length != lMorph.length) {
@@ -634,7 +627,7 @@ function g_select (oToken, sPattern, sNegPattern="") {
         lSelect = lMorph.filter( sMorph => sMorph.search(sNegPattern) === -1 );
     }
     else {
-        console.log("[Grammalecte] Error: missing pattern for disambiguation selection...");
+        console.error("Missing pattern for disambiguation selection...");
         return true;
     }
     if (lSelect.length > 0 && lSelect.length != lMorph.length) {

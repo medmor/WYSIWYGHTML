@@ -15,7 +15,7 @@ var helpers = {
             sMsg += "\n" + sParam + ": " + o.sParam;
         }
         sMsg += "\n" + JSON.stringify(o) + "\n__end__";
-        console.log(sMsg);
+        return sMsg;
     },
 
     loadFile: function (spf) {
@@ -28,7 +28,6 @@ var helpers = {
                 let fs = require("fs");
                 return fs.readFileSync(spf, "utf8");
             } else {
-                console.log("loadFile: " + spf);
                 let xRequest;
                 xRequest = new XMLHttpRequest();
                 xRequest.open('GET', spf, false); // 3rd arg is false for synchronous, sync is acceptable in workers

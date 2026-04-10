@@ -341,12 +341,11 @@ var str_transform = {
     },
 
     showDistance: function (s1, s2) {
-        console.log(`${s1} ≠ ${s2}`);
         let nDL = this.distanceDamerauLevenshtein(s1, s2);
         let fDLX = this.distanceDamerauLevenshteinX(s1, s2);
         let nS4 = this.distanceSift4(s1, s2);
         let fJW = this.distanceJaroWinkler(s1, s2);
-        console.log(`DL: ${nDL} DLX: ${fDLX} — S4: ${nS4} — JW: ${fJW}`);
+        return { damerauLevenshtein: nDL, damerauLevenshteinX: fDLX, sift4: nS4, jaroWinkler: fJW };
     },
 
     // Suffix only

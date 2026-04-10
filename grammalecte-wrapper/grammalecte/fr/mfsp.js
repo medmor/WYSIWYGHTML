@@ -95,7 +95,7 @@ var mfsp = {
             }
         }
         catch (e) {
-            console.log(e);
+            console.error(e);
             return "## erreur, code : " + sSfx + " ##";
         }
     }
@@ -110,7 +110,7 @@ if (!mfsp.bInit && typeof(process) !== 'undefined') {
     // WebExtension
     mfsp.init(helpers.loadFile(browser.runtime.getURL("grammalecte/fr/mfsp_data.json")));
 } else if (mfsp.bInit){
-    console.log("Module mfsp déjà initialisé");
+    // already initialized
 } else {
     //console.log("Module mfsp non initialisé");
 }

@@ -187,8 +187,8 @@ class SpellChecker {
             if (bNecessary) {
                 throw sErrorMessage + " | " + e.message;
             }
-            console.log(sErrorMessage);
-            console.log(e.message);
+            console.error(sErrorMessage);
+            console.error(e.message);
             return null;
         }
     }

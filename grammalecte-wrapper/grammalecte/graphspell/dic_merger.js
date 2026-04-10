@@ -42,7 +42,7 @@ const dic_merger = {
             return oDict;
         }
         catch (e) {
-            console.log("Dictionaries merger: unable to generate merged dictionary");
+            console.error("Dictionaries merger: unable to generate merged dictionary");
             console.error(e);
             return null;
         }

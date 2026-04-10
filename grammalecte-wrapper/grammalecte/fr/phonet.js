@@ -122,7 +122,7 @@ if (!phonet.bInit && typeof(process) !== 'undefined') {
     // WebExtension
     phonet.init(helpers.loadFile(browser.runtime.getURL("grammalecte/fr/phonet_data.json")));
 } else if (phonet.bInit){
-    console.log("Module phonet déjà initialisé");
+    // already initialized
 } else {
     //console.log("Module phonet non initialisé");
 }

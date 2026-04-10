@@ -260,26 +260,16 @@ var gc_engine = {
 
     load: function (sContext="JavaScript", sColorType="aRGB", sPath="") {
         try {
-            console.log("[gc_engine.load] Starting load with context:", sContext, "colorType:", sColorType);
             if (typeof(process) !== 'undefined') {
-                console.log("[gc_engine.load] Node.js environment detected");
                 this.oSpellChecker = new spellchecker.SpellChecker("fr", "", "fr-allvars.json", "", "");
-                console.log("[gc_engine.load] SpellChecker created:", this.oSpellChecker ? "OK" : "FAILED");
             } else {
-                console.log("[gc_engine.load] Browser environment detected");
                 this.oSpellChecker = new SpellChecker("fr", sPath, "fr-allvars.json", "", "");
             }
             this.oSpellChecker.activateStorage();
-            console.log("[gc_engine.load] Storage activated");
             this.oTokenizer = this.oSpellChecker.getTokenizer();
-            console.log("[gc_engine.load] Tokenizer:", this.oTokenizer ? "OK" : "NULL");
             gc_functions.load(sContext, this.oSpellChecker);
-            console.log("[gc_engine.load] gc_functions loaded");
             gc_options.load(sContext);
-            console.log("[gc_engine.load] gc_options loaded");
             this.oOptionsColors = gc_options.getOptionsColors(sContext, sColorType);
-            console.log("[gc_engine.load] Options colors:", this.oOptionsColors ? "OK" : "NULL");
-            console.log("[gc_engine.load] Load complete");
         }
         catch (e) {
             console.error("[gc_engine.load] ERROR:", e);
@@ -430,10 +420,7 @@ class TextParser {
                 this.sSentence = sText.slice(iStart, iEnd);
                 this.sSentence0 = this.sText0.slice(iStart, iEnd);
                 this.nOffsetWithinParagraph = iStart;
-                this.lTokens = Array.from((() => {
-                    console.log("[parse] gc_engine.oTokenizer:", gc_engine.oTokenizer);
-                    return gc_engine.oTokenizer.genTokens(this.sSentence, true);
-                })());
+                this.lTokens = Array.from(gc_engine.oTokenizer.genTokens(this.sSentence, true));
                 this.dTokenPos.clear();
                 for (let dToken of this.lTokens) {
                     if (dToken["sType"] != "INFO") {
@@ -509,9 +496,6 @@ class TextParser {
                 }
                 for (let [sGraphName, sLineId] of lRuleGroup) {
                     if (!dOptions.has(sGraphName) || dOptions.get(sGraphName)) {
-                        if (bDebug) {
-                            console.log(">>>> GRAPH: " + sGraphName + " " + sLineId);
-                        }
                         sText = this.parseGraph(gc_rules_graph.dAllGraph[sGraphName], sCountry, dOptions, bShowRuleId, bDebug, bContext);
                     }
                 }
@@ -542,17 +526,11 @@ class TextParser {
                                                 //console.log("-> text processor by " + sLineId + "\nzRegex: " + zRegex.source);
                                                 sText = this.rewriteText(sText, sAction, eAct[0], m, bUppercase);
                                                 bChange = true;
-                                                if (bDebug) {
-                                                    console.log("~ " + sText + "  -- " + m[eAct[0]] + "  # " + sLineId);
-                                                }
                                                 break;
                                             case "=":
                                                 // disambiguation
                                                 //console.log("-> disambiguation by " + sLineId + "\nzRegex: " + zRegex.source);
                                                 gc_functions[sAction](sText, m, this.dTokenPos);
-                                                if (bDebug) {
-                                                    console.log("= " + m[0] + "  # " + sLineId, "\nDA:", this.dTokenPos);
-                                                }
                                                 break;
                                             case ">":
                                                 // we do nothing, this test is just a condition to apply all following actions
@@ -567,8 +545,6 @@ class TextParser {
                                     }
                                 }
                                 catch (e) {
-                                    console.log(sText);
-                                    console.log("# line id: " + sLineId + "\n# rule id: " + sRuleId);
                                     console.error(e);
                                 }
                             }
@@ -604,10 +580,6 @@ class TextParser {
             if (oToken["sType"] != "INFO") {
                 this.dTokenPos.set(oToken["nStart"], oToken);
             }
-        }
-        if (bDebug) {
-            console.log("UPDATE:");
-            console.log(this.asString());
         }
     }
 
@@ -848,9 +820,6 @@ class TextParser {
         let bTagAndRewrite = false;
         try {
             for (let [iToken, oToken] of this.lTokens.entries()) {
-                if (bDebug) {
-                    console.log("TOKEN: " + oToken["sValue"]);
-                }
                 // check arcs for each existing pointer
                 let lNextPointers = [];
                 for (let oPointer of lPointers) {
@@ -867,9 +836,6 @@ class TextParser {
                             lNextPointers.push(oPointer);
                             continue;
                         }
-                        if (bDebug) {
-                            console.log("  MATCH: " + cNodeType + sMatch);
-                        }
                         let nMultiEnd = (cNodeType != "&") ? -1 : oToken["nMultiStartTo"];
                         lNextPointers.push({ "iToken1": oPointer["iToken1"], "iNode": iNode, "nMultiEnd": nMultiEnd });
                     }
@@ -879,9 +845,6 @@ class TextParser {
                 for (let [cNodeType, sMatch, iNode] of this._getNextNodes(oGraph, oToken, oGraph[0])) {
                     if (cNodeType === null) {
                         continue;
-                    }
-                    if (bDebug) {
-                        console.log("  MATCH: " + cNodeType + sMatch);
                     }
                     let nMultiEnd = (cNodeType != "&") ? -1 : oToken["nMultiStartTo"];
                     lPointers.push({ "iToken1": iToken, "iNode": iNode, "nMultiEnd": nMultiEnd });
@@ -910,9 +873,6 @@ class TextParser {
         if (bTagAndRewrite) {
             this.rewriteFromTags(bDebug);
         }
-        if (bDebug) {
-            console.log(this.asString());
-        }
         return this.sSentence;
     }
 
@@ -923,9 +883,6 @@ class TextParser {
             let bCondMemo = null;
             for (let sRuleId of oGraph[nextNodeKey]) {
                 try {
-                    if (bDebug) {
-                        console.log("   >TRY: " + sRuleId + " " + sLineId);
-                    }
                     let [_, sOption, sFuncCond, cActionType, sAction, ...eAct] = gc_rules_graph.dRule[sRuleId];
                     // Suggestion    [ option, condition, "-", replacement/suggestion/action, iTokenStart, iTokenEnd, cStartLimit, cEndLimit, bCaseSvty, nPriority, sMessage, iURL ]
                     // TextProcessor [ option, condition, "~", replacement/suggestion/action, iTokenStart, iTokenEnd, bCaseSvty ]
@@ -950,9 +907,6 @@ class TextParser {
                                                                                                  sMessage, gc_rules_graph.dURL[iURL], bShowRuleId, sOption, bContext));
                                         this.dErrorPriority.set(nErrorStart, nPriority);
                                         this.dSentenceError.set(nErrorStart, this.dError.get(nErrorStart));
-                                        if (bDebug) {
-                                            console.log("    NEW_ERROR: ",  this.dError.get(nErrorStart));
-                                        }
                                     }
                                 }
                             }
@@ -962,22 +916,13 @@ class TextParser {
                                 let nTokenEnd = (eAct[1] > 0) ? nTokenOffset + eAct[1] : nLastToken + eAct[1];
                                 this._tagAndPrepareTokenForRewriting(sAction, nTokenStart, nTokenEnd, nTokenOffset, nLastToken, eAct[2], bDebug);
                                 bChange = true;
-                                if (bDebug) {
-                                    console.log(`    TEXT_PROCESSOR: [${this.lTokens[nTokenStart]["sValue"]}:${this.lTokens[nTokenEnd]["sValue"]}]  > ${sAction}`);
-                                }
                             }
                             else if (cActionType == "=") {
                                 // disambiguation
                                 gc_functions[sAction](this.lTokens, nTokenOffset, nLastToken);
-                                if (bDebug) {
-                                    console.log(`    DISAMBIGUATOR: (${sAction})  [${this.lTokens[nTokenOffset+1]["sValue"]}:${this.lTokens[nLastToken]["sValue"]}]`);
-                                }
                             }
                             else if (cActionType == ">") {
                                 // we do nothing, this test is just a condition to apply all following actions
-                                if (bDebug) {
-                                    console.log("    COND_OK");
-                                }
                             }
                             else if (cActionType == "/") {
                                 // Tag
@@ -990,9 +935,6 @@ class TextParser {
                                         this.lTokens[i]["aTags"] = new Set(sAction.split("|"));
                                     }
                                 }
-                                if (bDebug) {
-                                    console.log(`    TAG:  ${sAction} > [${this.lTokens[nTokenStart]["sValue"]}:${this.lTokens[nTokenEnd]["sValue"]}]`);
-                                }
                                 for (let sTag of sAction.split("|")) {
                                     if (!this.dTags.has(sTag)) {
                                         this.dTags.set(sTag, [nTokenStart, nTokenEnd]);
@@ -1003,9 +945,6 @@ class TextParser {
                             }
                             else if (cActionType == "!") {
                                 // immunity
-                                if (bDebug) {
-                                    console.log("    IMMUNITY: " + sLineId + " / " + sRuleId);
-                                }
                                 let nTokenStart = (eAct[0] > 0) ? nTokenOffset + eAct[0] : nLastToken + eAct[0];
                                 let nTokenEnd = (eAct[1] > 0) ? nTokenOffset + eAct[1] : nLastToken + eAct[1];
                                 let sImmunity = sAction || "*";
@@ -1039,9 +978,6 @@ class TextParser {
                                 this.lTokens[nTokenEnd]["nMultiEndFrom"] = this.lTokens[nTokenStart]["i"];
                                 this.lTokens[nTokenStart]["oMultiToken"] = oMultiToken;
                                 this.lTokens[nTokenEnd]["oMultiToken"] = oMultiToken;
-                                if (bDebug) {
-                                    console.log(`"    MULTI-TOKEN: ${sAction}  [${this.lTokens[nTokenStart]["sValue"]}:${this.lTokens[nTokenEnd]["sValue"]}]`);
-                                }
                             }
                             else {
                                 console.log("# error: unknown action at " + sLineId);
@@ -1056,7 +992,6 @@ class TextParser {
                     }
                 }
                 catch (e) {
-                    console.log("Error: ", sLineId, sRuleId, this.sSentence);
                     console.error(e);
                 }
             }
@@ -1119,11 +1054,7 @@ class TextParser {
             "sLineId": sLineId,
             "sRuleId": sRuleId,
             "sType": sOption || "notype",
-            "aColor": (() => {
-                console.log("[_createError] gc_engine.oOptionsColors:", gc_engine.oOptionsColors);
-                console.log("[_createError] sOption:", sOption);
-                return gc_engine.oOptionsColors[sOption];
-            })(),
+            "aColor": gc_engine.oOptionsColors[sOption],
             "sMessage": sMessage,
             "aSuggestions": lSugg,
             "URL": sURL
@@ -1224,9 +1155,7 @@ class TextParser {
                 // several tokens
                 let lTokenValue = sAction.split("|");
                 if (lTokenValue.length != (nTokenRewriteEnd - nTokenRewriteStart + 1)) {
-                    if (bDebug) {
-                        console.log("Error. Text processor: number of replacements != number of tokens.");
-                    }
+                    console.error("Text processor: number of replacements != number of tokens.");
                     return;
                 }
                 let j = 0;
@@ -1248,9 +1177,6 @@ class TextParser {
 
     rewriteFromTags (bDebug=false) {
         // rewrite the sentence, modify tokens, purge the token list
-        if (bDebug) {
-            console.log("REWRITE");
-        }
         let lNewToken = [];
         let nMergeUntil = 0;
         let oMergingToken = null;
@@ -1260,9 +1186,6 @@ class TextParser {
                 if (nMergeUntil && iToken <= nMergeUntil) {
                     oMergingToken["sValue"] += " ".repeat(oToken["nStart"] - oMergingToken["nEnd"]) + oToken["sValue"];
                     oMergingToken["nEnd"] = oToken["nEnd"];
-                    if (bDebug) {
-                        console.log("  MERGED TOKEN: " + oMergingToken["sValue"]);
-                    }
                     oToken["bMerged"] = true;
                     bKeepToken = false;
                     if (iToken == nMergeUntil && oMergingToken.hasOwnProperty("sMergedValue")) {
@@ -1281,9 +1204,6 @@ class TextParser {
                     delete oToken["nMergeUntil"];
                 }
                 else if (oToken.hasOwnProperty("bToRemove")) {
-                    if (bDebug) {
-                        console.log("  REMOVED: " + oToken["sValue"]);
-                    }
                     this.sSentence = this.sSentence.slice(0, oToken["nStart"]) + " ".repeat(oToken["nEnd"] - oToken["nStart"]) + this.sSentence.slice(oToken["nEnd"]);
                     bKeepToken = false;
                 }
@@ -1293,9 +1213,6 @@ class TextParser {
                 lNewToken.push(oToken);
                 if (oToken.hasOwnProperty("sNewValue")) {
                     // rewrite token and sentence
-                    if (bDebug) {
-                        console.log(oToken["sValue"] + " -> " + oToken["sNewValue"]);
-                    }
                     oToken["sRealValue"] = oToken["sValue"];
                     oToken["sValue"] = oToken["sNewValue"];
                     let nDiffLen = oToken["sRealValue"].length - oToken["sNewValue"].length;
@@ -1304,9 +1221,6 @@ class TextParser {
                     delete oToken["sNewValue"];
                 }
             }
-        }
-        if (bDebug) {
-            console.log("  TEXT REWRITED: " + this.sSentence);
         }
         this.lTokens.length = 0;
         this.lTokens = lNewToken;

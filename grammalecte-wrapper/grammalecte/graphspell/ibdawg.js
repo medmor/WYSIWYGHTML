@@ -233,8 +233,6 @@ class IBDAWG {
         }
         catch (e) {
             console.error(e);
-            console.log("path: " + sPath);
-            console.log("dic:" + source.slice(0, 1000));
             throw Error("# Error. File not found or not loadable.\n" + e.message + "\n");
         }
         /*

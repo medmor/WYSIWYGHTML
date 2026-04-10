@@ -363,7 +363,7 @@ class TextFormatter {
                 sText = sText.replace(zRgx, sRep);
             }
         } else if (this.bDebug){
-            console.log("# Error. TF: there is no option “" + sRuleName+ "”.");
+            console.error("TF: there is no option "" + sRuleName+ "".");
         }
         return sText;
     }
@@ -376,7 +376,7 @@ class TextFormatter {
                 sText = sText.replace(zRgx, sRep);
             }
         } else if (this.bDebug){
-            console.log("# Error. TF: there is no option “" + sRuleName+ "”.");
+            console.error("TF: there is no option "" + sRuleName+ "".");
         }
         return [sText, nCount];
     }
@@ -447,7 +447,7 @@ class TextFormatter {
         if (dOpt !== null) {
             this.dOptions.gl_updateOnlyExistingKeys(dOpt);
         } else if (this.bDebug){
-            console.log("# Error. TF: no option to change.");
+            console.error("TF: no option to change.");
         }
     }
 }

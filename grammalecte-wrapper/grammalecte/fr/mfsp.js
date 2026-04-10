@@ -122,8 +122,9 @@ if (typeof(exports) !== 'undefined') {
     exports._dMiscPlur = mfsp._dMiscPlur;
     exports._dMasForm = mfsp._dMasForm;
     exports.init = mfsp.init;
-    exports.isFemForm = mfsp.isFemForm;
-    exports.getMasForm = mfsp.getMasForm;
+exports.isFemForm = mfsp.isFemForm;
+exports.isMasForm = mfsp.isMasForm;
+exports.getMasForm = mfsp.getMasForm;
     exports.hasMiscPlural = mfsp.hasMiscPlural;
     exports.getMiscPlural = mfsp.getMiscPlural;
     exports._whatSuffixCode = mfsp._whatSuffixCode;

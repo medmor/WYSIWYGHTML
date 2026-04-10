@@ -27,6 +27,11 @@ class GrammalecteWrapper {
       this.checker = new GrammarChecker(null, "fr", "Javascript");
       
       this.checker.load(["Grammalecte"]);
+
+      this.checker._oGce.setOption("esp", true);
+      this.checker._oGce.setOption("tab", true);
+      this.checker._oGce.setOption("nbsp", true);
+      this.checker._oGce.setOption("poncfin", true);
       
       this.isLoaded = true;
     } catch (error) {

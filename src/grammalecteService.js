@@ -5,7 +5,7 @@
 
 /**
  * Grammalecte Service
- * Handles communication with the Grammalecte Python server through the main process
+ * Handles communication with the Grammalecte JavaScript API through the main process
  */
 export class GrammalecteService {
 	constructor() {

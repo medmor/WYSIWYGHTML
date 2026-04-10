@@ -75,34 +75,22 @@ export class GrammalectePlugin extends Plugin {
 	 */
 	_setupMarkerConversion() {
 		const editor = this.editor;
-		const plugin = this;
 
-		// Use markerToElement to create view elements with custom attributes
-		// CKEditor 5 uses colon separator for namespaced events:
-		// - model: 'grammalecte-error' listens for 'addMarker:grammalecte-error' events
-		// - This catches markers named 'grammalecte-error', 'grammalecte-error:123', 'grammalecte-error:type:id', etc.
-		// - IMPORTANT: Marker names MUST use colon after the model name (e.g., 'grammalecte-error:test-123')
-		editor.conversion.for('editingDowncast').markerToElement({
+		editor.conversion.for('editingDowncast').markerToHighlight({
 			model: 'grammalecte-error',
-			view: (data, { writer }) => {
-				// data.markerName contains the full marker name
+			view: (data) => {
 				const markerName = data.markerName;
-				console.log('[Plugin] Marker conversion called for:', markerName);
-				const errorData = plugin._errors.get(markerName) || {};
-				console.log('[Plugin] Error data for conversion:', errorData);
-				const errorType = plugin._getErrorType(errorData.type || 'typo');
-				console.log('[Plugin] Error type:', errorType);
+				const errorData = this._errors.get(markerName) || {};
+				const errorType = this._getErrorType(errorData.type || 'typo');
 
-				// Create a span element with classes and attributes
-				const span = writer.createContainerElement('span', {
-					class: `${errorType.className} grammalecte-error`,
-					'data-error-id': markerName,
-					'data-error-message': errorData.message || '',
-					title: errorType.title
-				});
-
-				console.log('[Plugin] Created span element:', span);
-				return span;
+				return {
+					classes: [errorType.className, 'grammalecte-error'],
+					attributes: {
+						'data-error-id': markerName,
+						'data-error-message': errorData.message || '',
+						title: errorType.title
+					}
+				};
 			},
 			converterPriority: 'high'
 		});

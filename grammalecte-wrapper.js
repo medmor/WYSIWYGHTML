@@ -60,14 +60,38 @@ class GrammalecteWrapper {
     try {
       console.log('[GrammalecteWrapper] Checking grammar for text length:', text.length);
       
-      // Use the gramma method from GrammarChecker
-      const results = this.checker.gramma(text);
+      // Normalize text and split into paragraphs
+      const normalizedText = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+      const paragraphs = normalizedText.split('\n');
       
-      console.log('[GrammalecteWrapper] Grammar check completed, found', results.length, 'issues');
+      // Collect grammar + spelling errors per paragraph
+      const allResults = [];
       
-      // Transform results to match the expected format
-      // Grammalecte returns an array of paragraph results
-      const transformedResults = this._transformResults(results, text);
+      for (let i = 0; i < paragraphs.length; i++) {
+        const paragraphText = paragraphs[i];
+        if (paragraphText.trim().length === 0) continue;
+        
+        const grammarErrors = Array.from(this.checker._oGce.parse(paragraphText, 'fr'));
+        const spellingErrors = this.checker.spellParagraph(paragraphText, true);
+        
+        for (const err of grammarErrors) {
+          err._paragraphIndex = i + 1;
+          err._errorCategory = 'grammar';
+          allResults.push(err);
+        }
+        for (const err of spellingErrors) {
+          err._paragraphIndex = i + 1;
+          err._errorCategory = 'spelling';
+          if (!err.sMessage) {
+            err.sMessage = `« ${err.sValue} » : orthographe suspecte`;
+          }
+          allResults.push(err);
+        }
+      }
+      
+      console.log('[GrammalecteWrapper] Check completed, found', allResults.length, 'issues');
+      
+      const transformedResults = this._transformResults(allResults, text);
       
       return {
         success: true,
@@ -115,18 +139,9 @@ class GrammalecteWrapper {
     const paragraphErrors = new Map();
     
     for (const error of results) {
-      // Find which paragraph this error belongs to
-      let paragraphIndex = 1;
-      let paragraphStart = 0;
-      
-      for (let i = allParagraphs.length - 1; i >= 0; i--) {
-        const start = paragraphStarts.get(i + 1);
-        if (error.nStart >= start) {
-          paragraphIndex = i + 1;
-          paragraphStart = start;
-          break;
-        }
-      }
+      // Use pre-assigned paragraph index and category
+      const paragraphIndex = error._paragraphIndex;
+      const category = error._errorCategory || 'grammar';
       
       if (!paragraphErrors.has(paragraphIndex)) {
         paragraphErrors.set(paragraphIndex, {
@@ -137,25 +152,18 @@ class GrammalecteWrapper {
       }
       
       const paragraph = paragraphErrors.get(paragraphIndex);
-      
-      // Adjust offsets to be relative to paragraph start
-      const relativeStart = error.nStart - paragraphStart;
-      const relativeEnd = error.nEnd - paragraphStart;
-      
-      // Determine if this is a grammar or spelling error
-      const errorType = error.sType || 'grammar';
-      
+      // Offsets are already paragraph-relative from per-paragraph checking
       const errorObj = {
-        nStart: relativeStart,
-        nEnd: relativeEnd,
-        sMessage: error.sMessage,
+        nStart: error.nStart,
+        nEnd: error.nEnd,
+        sMessage: error.sMessage || '',
         aSuggestions: error.aSuggestions || [],
-        sType: errorType,
-        sRuleId: error.sRuleId,
-        sLineId: error.sLineId
+        sType: error.sType || category,
+        sRuleId: error.sRuleId || '',
+        sLineId: error.sLineId || ''
       };
       
-      if (errorType === 'spelling') {
+      if (category === 'spelling') {
         paragraph.lSpellingErrors.push(errorObj);
       } else {
         paragraph.lGrammarErrors.push(errorObj);

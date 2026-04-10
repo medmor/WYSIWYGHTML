@@ -132,8 +132,9 @@ if (typeof(exports) !== 'undefined') {
     exports._dWord = phonet._dWord;
     exports._lSet = phonet._lSet;
     exports._dMorph = phonet._dMorph;
-    exports.init = phonet.init;
-    exports.hasSimil = phonet.hasSimil;
-    exports.getSimil = phonet.getSimil;
-    exports.selectSimil = phonet.selectSimil;
+    exports.init = phonet.init.bind(phonet);
+    exports.hasSimil = phonet.hasSimil.bind(phonet);
+    exports.getSimil = phonet.getSimil.bind(phonet);
+    exports.selectSimil = phonet.selectSimil.bind(phonet);
+    exports.isSimilAs = phonet.isSimilAs.bind(phonet);
 }

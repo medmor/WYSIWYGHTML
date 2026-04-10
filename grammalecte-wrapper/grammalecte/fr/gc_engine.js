@@ -224,6 +224,7 @@ if (typeof(process) !== 'undefined') {
     var gc_rules_graph = require("./gc_rules_graph.js");
     var cregex = require("./cregex.js");
     var text = require("../text.js");
+    var phonet = require("./phonet.js");
 }
 
 

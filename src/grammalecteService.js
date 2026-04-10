@@ -71,39 +71,22 @@ export class GrammalecteService {
 	 * @returns {Promise<{success: boolean, errors: Array, message?: string}>}
 	 */
 	async checkGrammar(text, options = {}) {
-		console.log('[Service] checkGrammar() called');
-		console.log('[Service] Text length:', text?.length || 0);
-		console.log('[Service] Text preview:', text?.substring(0, 100));
-		
 		if (this.checkInProgress) {
-			console.log('[Service] Check already in progress, skipping...');
 			return { success: false, errors: [], message: 'A grammar check is already in progress' };
 		}
 
 		this.checkInProgress = true;
 
 		try {
-			// Ensure server is running
 			if (!this.isServerRunning) {
-				console.log('[Service] Server not running, starting...');
 				const startResult = await this.startServer();
 				if (!startResult.success) {
-					console.error('[Service] Failed to start server:', startResult.message);
 					return { success: false, errors: [], message: startResult.message };
 				}
-				console.log('[Service] Server started successfully');
 			}
 
-			console.log('[Service] Calling IPC grammalecte-check...');
 			const result = await this.invoke('grammalecte-check', text, options);
-			console.log('[Service] IPC result:', result);
-			
-			// Transform the Grammalecte response to extract errors
-			// Pass original text to calculate correct offsets across paragraphs
-			console.log('[Service] Extracting errors...');
 			const errors = this._extractErrors(result, text);
-			console.log('[Service] Errors extracted:', errors.length);
-			console.log('[Service] Errors:', errors);
 			
 			return { 
 				success: result.success, 

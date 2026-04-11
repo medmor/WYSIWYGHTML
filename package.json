@@ -38,6 +38,8 @@
     "files": [
       "main.js",
       "store.js",
+      "grammalecte-wrapper.js",
+      "grammalecte-wrapper/**/*",
       "index.html",
       "preview.html",
       "print.html",

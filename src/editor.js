@@ -387,26 +387,45 @@ window.currentFilePath = null;
 
 // AI Sidebar toggle functionality
 function setupAISidebarToggle() {
-	const toggleBtn = document.getElementById('toggle-ai-sidebar');
-	const closeBtn = document.getElementById('ai-sidebar-close');
 	const sidebar = document.getElementById('ai-sidebar');
+	const resizeHandle = document.getElementById('ai-sidebar-resize');
 
-	if (toggleBtn) {
-		toggleBtn.addEventListener('click', () => {
-			sidebar.classList.toggle('hidden');
-			if (!sidebar.classList.contains('hidden')) {
-				// Initialize AI features when sidebar is opened for the first time
-				if (window.aiFeatures) {
-					window.aiFeatures.initialize();
-				}
-			}
-		});
-	}
+	console.log('[AI Sidebar Resize] sidebar:', sidebar, 'resizeHandle:', resizeHandle);
 
-	if (closeBtn) {
-		closeBtn.addEventListener('click', () => {
-			sidebar.classList.add('hidden');
+	if (resizeHandle && sidebar) {
+		let isResizing = false;
+		let startX = 0;
+		let startWidth = 0;
+
+		resizeHandle.addEventListener('mousedown', (e) => {
+			isResizing = true;
+			startX = e.clientX;
+			startWidth = sidebar.offsetWidth;
+			resizeHandle.classList.add('active');
+			document.body.style.cursor = 'col-resize';
+			document.body.style.userSelect = 'none';
+			e.preventDefault();
+			console.log('[AI Sidebar Resize] mousedown - startX:', startX, 'startWidth:', startWidth);
 		});
+
+		document.addEventListener('mousemove', (e) => {
+			if (!isResizing) return;
+			const diff = e.clientX - startX;
+			const newWidth = Math.min(600, Math.max(200, startWidth + diff));
+			sidebar.style.width = newWidth + 'px';
+			console.log('[AI Sidebar Resize] mousemove - diff:', diff, 'newWidth:', newWidth, 'sidebar.style.width:', sidebar.style.width, 'actual offsetWidth:', sidebar.offsetWidth);
+		});
+
+		document.addEventListener('mouseup', () => {
+			if (!isResizing) return;
+			isResizing = false;
+			resizeHandle.classList.remove('active');
+			document.body.style.cursor = '';
+			document.body.style.userSelect = '';
+			console.log('[AI Sidebar Resize] mouseup - final width:', sidebar.offsetWidth);
+		});
+	} else {
+		console.log('[AI Sidebar Resize] Missing element - sidebar:', !!sidebar, 'resizeHandle:', !!resizeHandle);
 	}
 }
 

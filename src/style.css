@@ -386,12 +386,28 @@
 
 .ai-sidebar {
 	width: 320px;
+	flex-shrink: 0;
 	background: oklch(var(--b2));
 	border-left: 1px solid oklch(var(--bc) / 0.2);
 	display: flex;
 	flex-direction: column;
-	transition: transform 0.3s ease, opacity 0.3s ease;
 	overflow: hidden;
+	position: relative;
+}
+
+.ai-sidebar .resize-handle {
+	position: absolute;
+	top: 0;
+	right: -3px;
+	width: 7px;
+	height: 100%;
+	cursor: col-resize;
+	z-index: 10;
+}
+
+.ai-sidebar .resize-handle:hover,
+.ai-sidebar .resize-handle.active {
+	background: oklch(var(--p) / 0.3);
 }
 
 .ai-sidebar.hidden {

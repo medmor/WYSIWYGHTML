@@ -377,6 +377,9 @@ DecoupledEditor.create(document.querySelector('#editor'), editorConfig)
 		// Initialize AI Features
 		initializeAIFeatures(editor);
 
+		// Setup AI sidebar resize
+		setupAISidebarResize();
+
 		// Initialize Pagination Manager
 		paginationManager.init(editor, {
 			previewContainer: '#preview-container',
@@ -642,4 +645,40 @@ async function initializeAIFeatures(editor) {
 
 	// Make AI features available globally
 	window.aiFeatures = aiFeatures;
+}
+
+function setupAISidebarResize() {
+	const sidebar = document.getElementById('ai-sidebar');
+	const resizeHandle = document.getElementById('ai-sidebar-resize');
+
+	if (!resizeHandle || !sidebar) return;
+
+	let isResizing = false;
+	let startX = 0;
+	let startWidth = 0;
+
+	resizeHandle.addEventListener('mousedown', (e) => {
+		isResizing = true;
+		startX = e.clientX;
+		startWidth = sidebar.offsetWidth;
+		resizeHandle.classList.add('active');
+		document.body.style.cursor = 'col-resize';
+		document.body.style.userSelect = 'none';
+		e.preventDefault();
+	});
+
+	document.addEventListener('mousemove', (e) => {
+		if (!isResizing) return;
+		const diff = e.clientX - startX;
+		const newWidth = Math.min(600, Math.max(200, startWidth + diff));
+		sidebar.style.width = newWidth + 'px';
+	});
+
+	document.addEventListener('mouseup', () => {
+		if (!isResizing) return;
+		isResizing = false;
+		resizeHandle.classList.remove('active');
+		document.body.style.cursor = '';
+		document.body.style.userSelect = '';
+	});
 }

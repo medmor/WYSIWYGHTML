@@ -385,51 +385,7 @@ function setupButtonListeners() {
 // Global variable to track current file path
 window.currentFilePath = null;
 
-// AI Sidebar toggle functionality
-function setupAISidebarToggle() {
-	const sidebar = document.getElementById('ai-sidebar');
-	const resizeHandle = document.getElementById('ai-sidebar-resize');
-
-	console.log('[AI Sidebar Resize] sidebar:', sidebar, 'resizeHandle:', resizeHandle);
-
-	if (resizeHandle && sidebar) {
-		let isResizing = false;
-		let startX = 0;
-		let startWidth = 0;
-
-		resizeHandle.addEventListener('mousedown', (e) => {
-			isResizing = true;
-			startX = e.clientX;
-			startWidth = sidebar.offsetWidth;
-			resizeHandle.classList.add('active');
-			document.body.style.cursor = 'col-resize';
-			document.body.style.userSelect = 'none';
-			e.preventDefault();
-			console.log('[AI Sidebar Resize] mousedown - startX:', startX, 'startWidth:', startWidth);
-		});
-
-		document.addEventListener('mousemove', (e) => {
-			if (!isResizing) return;
-			const diff = e.clientX - startX;
-			const newWidth = Math.min(600, Math.max(200, startWidth + diff));
-			sidebar.style.width = newWidth + 'px';
-			console.log('[AI Sidebar Resize] mousemove - diff:', diff, 'newWidth:', newWidth, 'sidebar.style.width:', sidebar.style.width, 'actual offsetWidth:', sidebar.offsetWidth);
-		});
-
-		document.addEventListener('mouseup', () => {
-			if (!isResizing) return;
-			isResizing = false;
-			resizeHandle.classList.remove('active');
-			document.body.style.cursor = '';
-			document.body.style.userSelect = '';
-			console.log('[AI Sidebar Resize] mouseup - final width:', sidebar.offsetWidth);
-		});
-	} else {
-		console.log('[AI Sidebar Resize] Missing element - sidebar:', !!sidebar, 'resizeHandle:', !!resizeHandle);
-	}
-}
-
 // Call AI sidebar setup after DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-	setupAISidebarToggle();
+
 });

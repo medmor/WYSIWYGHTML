@@ -564,6 +564,9 @@
 
 .ai-output {
 	margin-top: 16px;
+	flex: 1;
+	overflow-y: auto;
+	min-height: 0;
 }
 
 .ai-output label {
@@ -580,7 +583,7 @@
 	border-radius: 6px;
 	padding: 12px;
 	min-height: 100px;
-	max-height: 300px;
+	max-height: 500px;
 	overflow-y: auto;
 	font-size: 14px;
 	line-height: 1.5;

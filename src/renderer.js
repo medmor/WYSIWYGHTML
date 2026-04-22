@@ -670,7 +670,7 @@ function setupAISidebarResize() {
 	document.addEventListener('mousemove', (e) => {
 		if (!isResizing) return;
 		const diff = e.clientX - startX;
-		const newWidth = Math.min(600, Math.max(200, startWidth + diff));
+		const newWidth = Math.min(1000, Math.max(200, startWidth + diff));
 		sidebar.style.width = newWidth + 'px';
 	});
 

@@ -346,7 +346,7 @@ export class AIFeatures {
 	showOutput(text) {
 		const output = this.outputElement || document.getElementById('ai-output');
 		if (output) {
-			output.textContent = text;
+			output.innerHTML = text;
 			output.className = 'ai-output success';
 		}
 	}

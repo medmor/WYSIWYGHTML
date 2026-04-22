@@ -148,13 +148,8 @@ ipcMain.on('save-file-as', (event, content) => {
 
 // PDF export window
 let pdfWindow = null;
-let pdfMargins = { top: 25, right: 25, bottom: 25, left: 25 }; // Default margins
 
 ipcMain.on('show-pdf-export', (event, data) => {
-  // Store margins for later use in PDF export
-  if (data.margins) {
-    pdfMargins = data.margins;
-  }
 
   // Create a new browser window for PDF export
   pdfWindow = new BrowserWindow({
@@ -184,7 +179,7 @@ ipcMain.on('show-pdf-export', (event, data) => {
 });
 
 // Save to PDF directly
-ipcMain.handle('save-to-pdf', async (event) => {
+ipcMain.handle('save-to-pdf', async (event, margins) => {
   
   if (!pdfWindow || pdfWindow.isDestroyed()) {
     return { success: false, error: 'Window not available' };
@@ -207,10 +202,10 @@ ipcMain.handle('save-to-pdf', async (event) => {
       pageSize: 'A4',
       printBackground: true,
       margins: {
-        top: pdfMargins.top * 0.0393701, // mm to inches
-        bottom: pdfMargins.bottom * 0.0393701,
-        left: pdfMargins.left * 0.0393701,
-        right: pdfMargins.right * 0.0393701,
+        top: margins.top * 0.0393701,
+        bottom: margins.bottom * 0.0393701,
+        left: margins.left * 0.0393701,
+        right: margins.right * 0.0393701,
         marginType: 'custom'
       }
     });

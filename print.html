@@ -29,12 +29,38 @@
       align-items: center;
       z-index: 1000;
       box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      gap: 16px;
     }
     
     #toolbar h1 {
       color: white;
       font-size: 16px;
       font-weight: 500;
+    }
+
+    #toolbar .toolbar-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    #toolbar label {
+      color: #ccc;
+      font-size: 14px;
+    }
+
+    #toolbar select {
+      background: #444;
+      color: white;
+      border: 1px solid #666;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    #toolbar select:focus {
+      outline: 2px solid #4a90d9;
     }
     
     #toolbar button {
@@ -45,7 +71,6 @@
       border-radius: 4px;
       cursor: pointer;
       font-size: 14px;
-      margin-left: 10px;
     }
     
     #toolbar button:hover {
@@ -101,7 +126,16 @@
 <body>
   <div id="toolbar">
     <h1>Exporter en PDF</h1>
-    <button id="save-pdf-btn">Enregistrer en PDF</button>
+    <div class="toolbar-controls">
+      <label for="margin-select">Marges :</label>
+      <select id="margin-select">
+        <option value="2.5">2.5 mm</option>
+        <option value="5">5 mm</option>
+        <option value="10">10 mm</option>
+        <option value="15" selected>15 mm</option>
+      </select>
+      <button id="save-pdf-btn">Enregistrer en PDF</button>
+    </div>
   </div>
   
   <div id="content-container">
@@ -113,15 +147,45 @@
   <script>
     const { ipcRenderer } = require('electron');
     
+    let currentMargins = { top: 15, right: 15, bottom: 15, left: 15 };
+
+    function applyMargins(marginMm) {
+      currentMargins = { top: marginMm, right: marginMm, bottom: marginMm, left: marginMm };
+      const contentDiv = document.getElementById('print-content');
+      contentDiv.style.padding = `${marginMm}mm`;
+      let pageStyle = document.getElementById('page-margin-style');
+      if (!pageStyle) {
+        pageStyle = document.createElement('style');
+        pageStyle.id = 'page-margin-style';
+        document.head.appendChild(pageStyle);
+      }
+      pageStyle.textContent = `
+        @media print {
+          @page {
+            size: A4;
+            margin: ${marginMm}mm;
+          }
+        }
+      `;
+    }
+
     // Wait for DOM to be ready
     document.addEventListener('DOMContentLoaded', () => {
       
+      // Margin selector
+      const marginSelect = document.getElementById('margin-select');
+      if (marginSelect) {
+        marginSelect.addEventListener('change', (e) => {
+          applyMargins(parseFloat(e.target.value));
+        });
+      }
+
       // Save to PDF button
       const savePdfBtn = document.getElementById('save-pdf-btn');
       if (savePdfBtn) {
         savePdfBtn.addEventListener('click', async () => {
           try {
-            const result = await ipcRenderer.invoke('save-to-pdf');
+            const result = await ipcRenderer.invoke('save-to-pdf', currentMargins);
             if (result.success) {
               alert('PDF enregistré: ' + result.filePath);
             } else if (result.error !== 'Cancelled') {
@@ -150,21 +214,17 @@
         document.head.appendChild(newStyleEl);
       }
       
-      // Update margins if provided
+      // Apply initial margins
       if (data.margins) {
-        const margins = data.margins;
-        contentDiv.style.padding = `${margins.top}mm ${margins.right}mm ${margins.bottom}mm ${margins.left}mm`;
-        // Update @page rule for print
-        const pageStyle = document.createElement('style');
-        pageStyle.textContent = `
-          @media print {
-            @page {
-              size: A4;
-              margin: ${margins.top}mm ${margins.right}mm ${margins.bottom}mm ${margins.left}mm;
-            }
-          }
-        `;
-        document.head.appendChild(pageStyle);
+        const m = Math.min(data.margins.top, data.margins.right, data.margins.bottom, data.margins.left);
+        const marginSelect = document.getElementById('margin-select');
+        if (marginSelect) {
+          const closest = [2.5, 5, 10, 15].reduce((prev, curr) => Math.abs(curr - m) < Math.abs(prev - m) ? curr : prev);
+          marginSelect.value = closest;
+          applyMargins(closest);
+        } else {
+          applyMargins(m);
+        }
       }
     });
   </script>

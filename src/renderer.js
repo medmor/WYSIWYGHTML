@@ -458,7 +458,7 @@ function setupFileButtons(editor, navbar) {
 	// Export PDF button - opens print preview in new window
 	document.getElementById('export-pdf').addEventListener('click', () => {
 		const content = editor.data.get();
-		ipcRenderer.send('show-pdf-export', { content, margins: { top: 25, right: 25, bottom: 25, left: 25 } });
+		ipcRenderer.send('show-pdf-export', { content, margins: { top: 15, right: 15, bottom: 15, left: 15 } });
 	});
 }
 

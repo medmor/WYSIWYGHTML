@@ -311,22 +311,28 @@ export class AIFeatures {
 	 * Handle insert button click
 	 */
 	handleInsert() {
-		const output = this.outputElement?.textContent || document.getElementById('ai-output')?.textContent;
+		const outputEl = this.outputElement || document.getElementById('ai-output');
+		const output = outputEl?.innerHTML;
 		
 		if (!output) {
 			this.showError('No content to insert');
 			return;
 		}
 
-		const selectedText = this.getSelectedText();
-		
-		if (selectedText) {
-			// Replace selected text
-			this.replaceSelectedText(output);
-		} else {
-			// Insert at cursor
-			this.insertText(output);
-		}
+		this.editor.model.change(writer => {
+			const viewFragment = this.editor.data.processor.toView(output);
+			const modelFragment = this.editor.data.toModel(viewFragment);
+
+			const selection = this.editor.model.document.selection;
+			const position = selection.getFirstPosition();
+
+			if (!selection.isCollapsed) {
+				const range = selection.getFirstRange();
+				writer.remove(range);
+			}
+
+			this.editor.model.insertContent(modelFragment, position);
+		});
 	}
 
 	/**

@@ -225,6 +225,8 @@ if (typeof(process) !== 'undefined') {
     var cregex = require("./cregex.js");
     var text = require("../text.js");
     var phonet = require("./phonet.js");
+
+    global.cregex = cregex;
 }
 
 

@@ -41,7 +41,6 @@
       "grammalecte-wrapper.js",
       "grammalecte-wrapper/**/*",
       "index.html",
-      "preview.html",
       "print.html",
       "src/**/*",
       "dist/renderer.js",
@@ -55,8 +54,5 @@
       ],
       "category": "TextEditor"
     }
-  },
-  "dependencies": {
-    "pagedjs": "^0.4.3"
   }
 }

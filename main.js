@@ -5,7 +5,6 @@ const store = require('./store');
 const { grammalecteWrapper } = require('./grammalecte-wrapper');
 
 let mainWindow;
-let previewWindow = null;
 let currentFilePath = null;
 
 function createWindow() {
@@ -27,37 +26,6 @@ function createWindow() {
   } else {
     mainWindow.loadFile('index.html');
   }
-}
-
-function createPreviewWindow() {
-  if (previewWindow && !previewWindow.isDestroyed()) {
-    previewWindow.focus();
-    return previewWindow;
-  }
-  
-  previewWindow = new BrowserWindow({
-    width: 900,
-    height: 1100,
-    parent: mainWindow,
-    title: 'Aperçu - Pagination A4',
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false
-    },
-    backgroundColor: '#f0f0f0'
-  });
-  
-  previewWindow.loadFile('preview.html');
-  
-  previewWindow.on('closed', () => {
-    previewWindow = null;
-    // Notify renderer that preview was closed
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('preview-closed');
-    }
-  });
-  
-  return previewWindow;
 }
 
 app.whenReady().then(async () => {
@@ -254,33 +222,6 @@ ipcMain.handle('save-to-pdf', async (event) => {
   } catch (err) {
     console.error('[Main] PDF save error:', err);
     return { success: false, error: err.message };
-  }
-});
-
-// Show PDF export window
-ipcMain.on('show-preview', (event, data) => {
-  const win = createPreviewWindow();
-  
-  // Wait for window to load, then send content
-  win.webContents.once('did-finish-load', () => {
-    win.webContents.send('preview-content', { 
-      content: data.content,
-      margins: data.margins
-    });
-  });
-});
-
-// Print from preview window
-ipcMain.on('print-from-preview', (event) => {
-  if (previewWindow && !previewWindow.isDestroyed()) {
-    previewWindow.webContents.print();
-  }
-});
-
-// Refresh preview content
-ipcMain.on('refresh-preview', (event, data) => {
-  if (previewWindow && !previewWindow.isDestroyed()) {
-    previewWindow.webContents.send('refresh-preview-content', data);
   }
 });
 

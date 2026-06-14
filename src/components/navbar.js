@@ -26,12 +26,17 @@ export function createNavbarHTML() {
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
           Enregistrer
         </button>
-        <button id="save-file-as" class="btn btn-ghost btn-sm join-item">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
-          Enregistrer sous
-        </button>
-      </div>
-    </div>
+         <button id="save-file-as" class="btn btn-ghost btn-sm join-item">
+           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+           Enregistrer sous
+         </button>
+       </div>
+       <span id="current-file-path" class="text-sm text-base-content/70 truncate max-w-48" title="Nouveau fichier">Nouveau fichier</span>
+       <span id="save-status" class="save-status saved" title="Aucune modification">
+         <svg class="save-icon-saved" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+         <svg class="save-icon-dirty" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6"></circle></svg>
+       </span>
+     </div>
     
     <!-- Zoom controls and actions -->
     <div class="navbar-end gap-2">
@@ -67,9 +72,6 @@ export function createNavbarHTML() {
  * @param {Object} options.ipcRenderer - Electron IPC renderer for file operations
  */
 export function initNavbar(options = {}) {
-  const { ipcRenderer } = options;
-  
-  // Theme toggle functionality
   const themeToggle = document.getElementById('theme-toggle');
   const html = document.documentElement;
   
@@ -86,8 +88,32 @@ export function initNavbar(options = {}) {
       localStorage.setItem('theme', newTheme);
     });
   }
-  
-  // Return public API for navbar
+
+  let currentFilePath = 'Nouveau fichier';
+  const filePathElement = document.getElementById('current-file-path');
+  const saveStatusElement = document.getElementById('save-status');
+
   return {
+    setFilePath(name) {
+      currentFilePath = name;
+      if (filePathElement) {
+        filePathElement.textContent = name;
+      }
+    },
+    getFilePath() {
+      return currentFilePath;
+    },
+    setSaveStatus(dirty) {
+      if (!saveStatusElement) return;
+      if (dirty) {
+        saveStatusElement.classList.remove('saved');
+        saveStatusElement.classList.add('dirty');
+        saveStatusElement.title = 'Modifications non enregistrées';
+      } else {
+        saveStatusElement.classList.remove('dirty');
+        saveStatusElement.classList.add('saved');
+        saveStatusElement.title = 'Aucune modification';
+      }
+    }
   };
 }

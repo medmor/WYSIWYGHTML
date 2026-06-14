@@ -645,3 +645,38 @@
 	background-color: rgba(100, 150, 255, 0.3);
 	text-decoration-color: rgba(100, 150, 255, 0.9);
 }
+
+/* Save status indicator */
+.save-status {
+	display: inline-flex;
+	align-items: center;
+	margin-left: 6px;
+	transition: opacity 0.2s ease;
+}
+
+.save-status .save-icon-saved {
+	color: oklch(0.7 0.17 150);
+	display: none;
+}
+
+.save-status .save-icon-dirty {
+	color: oklch(0.7 0.18 40);
+	display: none;
+}
+
+.save-status.saved .save-icon-saved {
+	display: inline;
+}
+
+.save-status.dirty .save-icon-dirty {
+	display: inline;
+}
+
+.save-status.dirty {
+	animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.4; }
+}

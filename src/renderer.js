@@ -78,6 +78,10 @@ import { createNavbarHTML, initNavbar } from './components/navbar.js';
 
 const LICENSE_KEY = 'GPL';
 
+// Unsaved changes tracking
+let isDirty = false;
+let lastSavedContent = '';
+
 const editorConfig = {
 	toolbar: {
 		items: [
@@ -293,9 +297,7 @@ const editorConfig = {
 		feeds: [
 			{
 				marker: '@',
-				feed: [
-					/* See: https://ckeditor.com/docs/ckeditor5/latest/features/mentions.html */
-				]
+				feed: []
 			}
 		]
 	},
@@ -347,6 +349,23 @@ const editorConfig = {
 	table: {
 		contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells']
 	},
+	autosave: {
+		save: (editor) => {
+			const api = window.electronAPI;
+			if (!api) return Promise.resolve();
+			const content = editor.data.get();
+			if (window.currentFilePath) {
+				return new Promise(resolve => {
+					api.saveFile(content);
+					markClean();
+					resolve();
+				});
+			}
+			markClean();
+			return Promise.resolve();
+		},
+		waitingTime: 5000
+	},
 	translations: [translations]
 };
 
@@ -355,7 +374,25 @@ const navbarContainer = document.getElementById('navbar-container');
 if (navbarContainer) {
 	navbarContainer.innerHTML = createNavbarHTML();
 }
-const navbar = initNavbar({ ipcRenderer: window.ipcRenderer });
+const navbar = initNavbar();
+
+// Track unsaved changes
+function markDirty() {
+	isDirty = true;
+	if (navbar) navbar.setSaveStatus(true);
+}
+
+function markClean() {
+	isDirty = false;
+	if (window.currentEditor) {
+		lastSavedContent = window.currentEditor.data.get();
+	}
+	if (navbar) navbar.setSaveStatus(false);
+}
+
+function checkUnsaved() {
+	return isDirty;
+}
 
 // Initialize CKEditor
 DecoupledEditor.create(document.querySelector('#editor'), editorConfig)
@@ -364,17 +401,30 @@ DecoupledEditor.create(document.querySelector('#editor'), editorConfig)
 		document.querySelector('#editor-toolbar').appendChild(editor.ui.view.toolbar.element);
 		document.querySelector('#editor-menu-bar').appendChild(editor.ui.view.menuBarView.element);
 
-		// Make editor available globally for IPC handlers
+		// Make editor available globally
 		window.currentEditor = editor;
 
-		// Setup button click handlers for file operations
+		// Set initial content as "saved"
+		lastSavedContent = editor.data.get();
+
+		// Track content changes for unsaved changes
+		editor.model.document.on('change:data', () => {
+			const currentContent = editor.data.get();
+			if (currentContent !== lastSavedContent) {
+				markDirty();
+			} else {
+				markClean();
+			}
+		});
+
+		// Setup all UI handlers
 		setupFileButtons(editor, navbar);
+		setupIPCHandlers(editor, navbar);
+		setupKeyboardShortcuts(editor, navbar);
+		setupUnsavedChangesProtection();
 
 		// Initialize AI Features
 		initializeAIFeatures(editor);
-
-		// Setup keyboard shortcuts
-		setupKeyboardShortcuts(editor, navbar);
 
 		// Setup AI sidebar resize
 		setupAISidebarResize();
@@ -384,33 +434,133 @@ DecoupledEditor.create(document.querySelector('#editor'), editorConfig)
 	});
 
 /**
+ * Setup IPC handlers for file operations (consolidated from index.html)
+ */
+function setupIPCHandlers(editor, navbar) {
+	const api = window.electronAPI;
+
+	// File opened from main process
+	api.onFileOpened((data) => {
+		if (data.success) {
+			editor.data.set(data.content);
+			window.currentFilePath = data.filePath;
+			const fileName = data.filePath.split('/').pop().split('\\').pop();
+			document.title = `WYSIWYG HTML Editor : ${fileName}`;
+			if (navbar) navbar.setFilePath(fileName);
+			markClean();
+		} else {
+			alert('Erreur lors de l\'ouverture du fichier : ' + data.error);
+		}
+	});
+
+	// File saved confirmation from main process
+	api.onFileSaved((data) => {
+		if (data.success) {
+			window.currentFilePath = data.filePath;
+			const fileName = data.filePath.split('/').pop().split('\\').pop();
+			document.title = `WYSIWYG HTML Editor : ${fileName}`;
+			if (navbar) navbar.setFilePath(fileName);
+			markClean();
+		} else {
+			alert('Erreur lors de l\'enregistrement : ' + data.error);
+		}
+	});
+
+	// Global shortcut: new file
+	api.onShortcutNewFile(() => {
+		if (checkUnsaved()) {
+			if (!confirm('Vous avez des modifications non enregistrées. Voulez-vous continuer ?')) {
+				return;
+			}
+		}
+		editor.data.set('');
+		window.currentFilePath = null;
+		document.title = 'WYSIWYG HTML Editor : Nouveau document';
+		if (navbar) navbar.setFilePath('Nouveau fichier');
+		markClean();
+	});
+
+	// Main process asks if there are unsaved changes before closing
+	api.onCheckUnsaved(() => {
+		if (checkUnsaved()) {
+			const choice = confirm('Vous avez des modifications non enregistrées. Voulez-vous les enregistrer avant de quitter ?');
+			if (choice) {
+				// User wants to save first
+				const content = editor.data.get();
+				if (window.currentFilePath) {
+					api.saveFile(content);
+				} else {
+					api.saveFileAs(content);
+				}
+				// Close after save completes via the onFileSaved handler
+				// For now, close since the save is async
+				api.closeWindow();
+			} else {
+				// User chose "Don't Save" - close without saving
+				api.closeWindow();
+			}
+		} else {
+			api.closeWindow();
+		}
+	});
+}
+
+/**
+ * Protect against losing unsaved changes
+ */
+function setupUnsavedChangesProtection() {
+	window.addEventListener('beforeunload', (e) => {
+		if (checkUnsaved()) {
+			e.preventDefault();
+			e.returnValue = '';
+		}
+	});
+}
+
+/**
  * Setup click handlers for file operation buttons
  */
 function setupFileButtons(editor, navbar) {
-	const ipcRenderer = window.ipcRenderer;
+	const api = window.electronAPI;
 
 	// New file button
 	document.getElementById('new-file').addEventListener('click', () => {
+		if (checkUnsaved()) {
+			if (!confirm('Vous avez des modifications non enregistrées. Voulez-vous continuer ?')) {
+				return;
+			}
+		}
 		editor.data.set('');
 		window.currentFilePath = null;
+		document.title = 'WYSIWYG HTML Editor : Nouveau document';
 		if (navbar) navbar.setFilePath('Nouveau fichier');
+		markClean();
 	});
 
 	// Open file button
 	document.getElementById('open-file').addEventListener('click', () => {
-		ipcRenderer.send('open-file');
+		if (checkUnsaved()) {
+			if (!confirm('Vous avez des modifications non enregistrées. Voulez-vous continuer ?')) {
+				return;
+			}
+		}
+		api.openFile();
 	});
 
 	// Save file button
 	document.getElementById('save-file').addEventListener('click', () => {
 		const content = editor.data.get();
-		ipcRenderer.send('save-file', content);
+		if (window.currentFilePath) {
+			api.saveFile(content);
+		} else {
+			api.saveFileAs(content);
+		}
 	});
 
 	// Save file as button
 	document.getElementById('save-file-as').addEventListener('click', () => {
 		const content = editor.data.get();
-		ipcRenderer.send('save-file-as', content);
+		api.saveFileAs(content);
 	});
 
 	// Zoom controls
@@ -420,9 +570,8 @@ function setupFileButtons(editor, navbar) {
 	const editorContainer = document.querySelector('.editor-container__editor');
 	const zoomLevelSpan = document.getElementById('zoom-level');
 
-	// Load saved zoom from localStorage
 	let currentZoom = parseInt(localStorage.getItem('zoomLevel'), 10) || 100;
-	currentZoom = Math.max(minZoom, Math.min(maxZoom, currentZoom)); // Clamp to valid range
+	currentZoom = Math.max(minZoom, Math.min(maxZoom, currentZoom));
 
 	function updateZoom() {
 		if (editorContainer) {
@@ -432,11 +581,9 @@ function setupFileButtons(editor, navbar) {
 		if (zoomLevelSpan) {
 			zoomLevelSpan.textContent = `${currentZoom}%`;
 		}
-		// Persist zoom level
 		localStorage.setItem('zoomLevel', currentZoom.toString());
 	}
 
-	// Apply initial zoom
 	updateZoom();
 
 	document.getElementById('zoom-in').addEventListener('click', () => {
@@ -458,10 +605,10 @@ function setupFileButtons(editor, navbar) {
 		updateZoom();
 	});
 
-	// Export PDF button - opens print preview in new window
+	// Export PDF button
 	document.getElementById('export-pdf').addEventListener('click', () => {
 		const content = editor.data.get();
-		ipcRenderer.send('show-pdf-export', { content, margins: { top: 15, right: 15, bottom: 15, left: 15 } });
+		api.showPdfExport({ content, margins: { top: 15, right: 15, bottom: 15, left: 15 } });
 	});
 }
 
@@ -472,14 +619,12 @@ async function initializeAIFeatures(editor) {
 	const statusElement = document.getElementById('ai-status');
 	const modelSelect = document.getElementById('ai-model');
 
-	// Check Ollama connection and populate models
 	try {
 		const isConnected = await checkOllamaConnection();
 		if (isConnected && statusElement) {
 			statusElement.textContent = 'Connecté';
 			statusElement.className = 'ai-status connected';
 
-			// Get available models
 			const models = await getAvailableModels();
 			
 			if (modelSelect) {
@@ -488,7 +633,6 @@ async function initializeAIFeatures(editor) {
 						`<option value="${model}">${model}</option>`
 					).join('');
 				} else {
-					// No models found - show message
 					modelSelect.innerHTML = '<option value="">Aucun modèle trouvé</option>';
 					console.warn('No Ollama models found. Make sure to pull a model: ollama pull llama3');
 				}
@@ -511,11 +655,8 @@ async function initializeAIFeatures(editor) {
 		}
 	}
 
-	// Initialize AI Features class
 	const aiFeatures = new AIFeatures(editor);
 	aiFeatures.initialize();
-
-	// Make AI features available globally
 	window.aiFeatures = aiFeatures;
 }
 
@@ -523,7 +664,7 @@ async function initializeAIFeatures(editor) {
  * Setup keyboard shortcuts
  */
 function setupKeyboardShortcuts(editor, navbar) {
-	const ipcRenderer = window.ipcRenderer;
+	const api = window.electronAPI;
 
 	document.addEventListener('keydown', (e) => {
 		const isCtrl = e.ctrlKey || e.metaKey;
@@ -533,33 +674,45 @@ function setupKeyboardShortcuts(editor, navbar) {
 		switch (true) {
 			case e.key === 'n' && !e.shiftKey:
 				e.preventDefault();
+				if (checkUnsaved()) {
+					if (!confirm('Vous avez des modifications non enregistrées. Voulez-vous continuer ?')) {
+						return;
+					}
+				}
 				editor.data.set('');
 				window.currentFilePath = null;
+				document.title = 'WYSIWYG HTML Editor : Nouveau document';
 				if (navbar) navbar.setFilePath('Nouveau fichier');
+				markClean();
 				break;
 
 			case e.key === 'o':
 				e.preventDefault();
-				ipcRenderer.send('open-file');
+				if (checkUnsaved()) {
+					if (!confirm('Vous avez des modifications non enregistrées. Voulez-vous continuer ?')) {
+						return;
+					}
+				}
+				api.openFile();
 				break;
 
 			case e.key === 's' && e.shiftKey:
 				e.preventDefault();
-				ipcRenderer.send('save-file-as', editor.data.get());
+				api.saveFileAs(editor.data.get());
 				break;
 
 			case e.key === 's' && !e.shiftKey:
 				e.preventDefault();
 				if (window.currentFilePath) {
-					ipcRenderer.send('save-file', editor.data.get());
+					api.saveFile(editor.data.get());
 				} else {
-					ipcRenderer.send('save-file-as', editor.data.get());
+					api.saveFileAs(editor.data.get());
 				}
 				break;
 
 			case e.key === 'p':
 				e.preventDefault();
-				ipcRenderer.send('show-pdf-export', { content: editor.data.get(), margins: { top: 15, right: 15, bottom: 15, left: 15 } });
+				api.showPdfExport({ content: editor.data.get(), margins: { top: 15, right: 15, bottom: 15, left: 15 } });
 				break;
 
 			case e.key === '=' || e.key === '+':

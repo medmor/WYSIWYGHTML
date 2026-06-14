@@ -20,10 +20,22 @@ export class GrammalecteService {
 	 * @returns {Promise<any>}
 	 */
 	async invoke(channel, ...args) {
-		if (!window.ipcRenderer) {
-			throw new Error('IPC renderer not available');
+		if (!window.electronAPI) {
+			throw new Error('Electron API not available');
 		}
-		return window.ipcRenderer.invoke(channel, ...args);
+		const methodMap = {
+			'grammalecte-start': window.electronAPI.grammalecteStart,
+			'grammalecte-stop': window.electronAPI.grammalecteStop,
+			'grammalecte-check': window.electronAPI.grammalecteCheck,
+			'grammalecte-suggest': window.electronAPI.grammalecteSuggest,
+			'grammalecte-get-options': window.electronAPI.grammalecteGetOptions,
+			'grammalecte-set-options': window.electronAPI.grammalecteSetOptions
+		};
+		const method = methodMap[channel];
+		if (!method) {
+			throw new Error(`Unknown IPC channel: ${channel}`);
+		}
+		return method(...args);
 	}
 
 	/**

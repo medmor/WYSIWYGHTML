@@ -12,8 +12,9 @@ function createWindow() {
     width: 1000,
     height: 800,
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js'),
       spellcheck: true
     },
     backgroundColor: '#ffffff',
@@ -26,6 +27,11 @@ function createWindow() {
   } else {
     mainWindow.loadFile('index.html');
   }
+
+  mainWindow.on('close', (e) => {
+    mainWindow.webContents.send('check-unsaved');
+    e.preventDefault();
+  });
 }
 
 app.whenReady().then(async () => {
@@ -154,25 +160,36 @@ ipcMain.on('save-file-as', (event, content) => {
   });
 });
 
+// Close window after confirming unsaved changes
+ipcMain.on('close-window', () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.removeListener('close', () => {});
+    mainWindow.destroy();
+  }
+});
+
+// Cancel close (user declined)
+ipcMain.on('cancel-close', () => {
+  // Window stays open, close was already prevented
+});
+
 // PDF export window
 let pdfWindow = null;
 
 ipcMain.on('show-pdf-export', (event, data) => {
-
-  // Create a new browser window for PDF export
   pdfWindow = new BrowserWindow({
     width: 800,
     height: 1000,
     title: 'Exporter en PDF',
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js')
     }
   });
 
   pdfWindow.loadFile('print.html');
 
-  // Wait for window to load, then send content
   pdfWindow.webContents.once('did-finish-load', () => {
     pdfWindow.webContents.send('print-content', {
       content: data.content,
@@ -188,13 +205,10 @@ ipcMain.on('show-pdf-export', (event, data) => {
 
 // Save to PDF directly
 ipcMain.handle('save-to-pdf', async (event, margins) => {
-  
   if (!pdfWindow || pdfWindow.isDestroyed()) {
     return { success: false, error: 'Window not available' };
   }
 
-  const { dialog } = require('electron');
-  
   try {
     const { filePath } = await dialog.showSaveDialog(pdfWindow, {
       title: 'Enregistrer en PDF',
@@ -218,7 +232,6 @@ ipcMain.handle('save-to-pdf', async (event, margins) => {
       }
     });
     
-    const fs = require('fs');
     fs.writeFileSync(filePath, pdfData);
     
     return { success: true, filePath };
@@ -232,7 +245,6 @@ ipcMain.handle('save-to-pdf', async (event, margins) => {
 // Grammalecte Grammar Checker IPC Handlers
 // ============================================
 
-// Initialize Grammalecte (no server needed, uses JavaScript API directly)
 ipcMain.handle('grammalecte-start', async (event) => {
   try {
     await grammalecteWrapper.load();
@@ -243,17 +255,14 @@ ipcMain.handle('grammalecte-start', async (event) => {
   }
 });
 
-// Stop Grammalecte (no-op for JavaScript API)
 ipcMain.handle('grammalecte-stop', async (event) => {
   try {
-    // No cleanup needed for JavaScript API
     return { success: true };
   } catch (err) {
     return { success: false, error: err.message };
   }
 });
 
-// Check grammar for text
 ipcMain.handle('grammalecte-check', async (event, text, options) => {
   try {
     const result = await grammalecteWrapper.checkGrammar(text, options);
@@ -264,7 +273,6 @@ ipcMain.handle('grammalecte-check', async (event, text, options) => {
   }
 });
 
-// Get spelling suggestions for a word
 ipcMain.handle('grammalecte-suggest', async (event, word) => {
   try {
     const result = await grammalecteWrapper.getSuggestions(word);
@@ -275,7 +283,6 @@ ipcMain.handle('grammalecte-suggest', async (event, word) => {
   }
 });
 
-// Get grammar options
 ipcMain.handle('grammalecte-get-options', async (event) => {
   try {
     const result = await grammalecteWrapper.getOptions();
@@ -286,7 +293,6 @@ ipcMain.handle('grammalecte-get-options', async (event) => {
   }
 });
 
-// Set grammar options
 ipcMain.handle('grammalecte-set-options', async (event, options) => {
   try {
     const result = await grammalecteWrapper.setOptions(options);

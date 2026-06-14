@@ -244,8 +244,6 @@
   </div>
 
   <script>
-    const { ipcRenderer } = require('electron');
-    
     let currentMargins = { top: 15, right: 15, bottom: 15, left: 15 };
 
     function applyMargins(marginMm) {
@@ -268,10 +266,7 @@
       `;
     }
 
-    // Wait for DOM to be ready
     document.addEventListener('DOMContentLoaded', () => {
-      
-      // Margin selector
       const marginSelect = document.getElementById('margin-select');
       if (marginSelect) {
         marginSelect.addEventListener('change', (e) => {
@@ -279,12 +274,11 @@
         });
       }
 
-      // Save to PDF button
       const savePdfBtn = document.getElementById('save-pdf-btn');
       if (savePdfBtn) {
         savePdfBtn.addEventListener('click', async () => {
           try {
-            const result = await ipcRenderer.invoke('save-to-pdf', currentMargins);
+            const result = await window.electronAPI.saveToPdf(currentMargins);
             if (result.success) {
               alert('PDF enregistré: ' + result.filePath);
             } else if (result.error !== 'Cancelled') {
@@ -297,23 +291,18 @@
         });
       }
     });
-    
-    // Handle content from main window
-    ipcRenderer.on('print-content', (event, data) => {
+
+    window.electronAPI.onPrintContent((data) => {
       const contentDiv = document.getElementById('print-content');
-      
-      // Set content
       contentDiv.innerHTML = data.content || '<p>Aucun contenu</p>';
-      
-      // Apply custom styles if provided
+
       if (data.styles) {
         const newStyleEl = document.createElement('style');
         newStyleEl.id = 'dynamic-styles';
         newStyleEl.textContent = data.styles;
         document.head.appendChild(newStyleEl);
       }
-      
-      // Apply initial margins
+
       if (data.margins) {
         const m = Math.min(data.margins.top, data.margins.right, data.margins.bottom, data.margins.left);
         const marginSelect = document.getElementById('margin-select');

@@ -132,6 +132,16 @@
       }
     });
     
+    // Handle global shortcut: new file
+    ipcRenderer.on('shortcut-new-file', () => {
+      if (window.currentEditor) {
+        window.currentEditor.data.set('');
+      }
+      window.currentFilePath = null;
+      document.getElementById('current-file-path').textContent = 'Nouveau document';
+      document.title = 'WYSIWYG HTML Editor : Nouveau document';
+    });
+    
     // Handle save as event
     ipcRenderer.on('save-file-as', (event, content) => {
       const dialog = require('electron').dialog;

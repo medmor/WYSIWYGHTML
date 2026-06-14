@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, globalShortcut } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const store = require('./store');
@@ -46,6 +46,13 @@ app.whenReady().then(async () => {
   const { session } = require('electron');
   session.defaultSession.setSpellCheckerLanguages(['fr', 'en-US']);
   
+  // Register global shortcuts (prevent Electron defaults)
+  globalShortcut.register('CommandOrControl+N', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('shortcut-new-file');
+    }
+  });
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
@@ -61,6 +68,7 @@ app.on('window-all-closed', () => {
 
 // Clean up when app is quitting
 app.on('will-quit', () => {
+  globalShortcut.unregisterAll();
 });
 
 // IPC handlers for file operations

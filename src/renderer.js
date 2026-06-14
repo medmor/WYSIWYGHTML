@@ -373,6 +373,9 @@ DecoupledEditor.create(document.querySelector('#editor'), editorConfig)
 		// Initialize AI Features
 		initializeAIFeatures(editor);
 
+		// Setup keyboard shortcuts
+		setupKeyboardShortcuts(editor, navbar);
+
 		// Setup AI sidebar resize
 		setupAISidebarResize();
 	})
@@ -514,6 +517,67 @@ async function initializeAIFeatures(editor) {
 
 	// Make AI features available globally
 	window.aiFeatures = aiFeatures;
+}
+
+/**
+ * Setup keyboard shortcuts
+ */
+function setupKeyboardShortcuts(editor, navbar) {
+	const ipcRenderer = window.ipcRenderer;
+
+	document.addEventListener('keydown', (e) => {
+		const isCtrl = e.ctrlKey || e.metaKey;
+
+		if (!isCtrl) return;
+
+		switch (true) {
+			case e.key === 'n' && !e.shiftKey:
+				e.preventDefault();
+				editor.data.set('');
+				window.currentFilePath = null;
+				if (navbar) navbar.setFilePath('Nouveau fichier');
+				break;
+
+			case e.key === 'o':
+				e.preventDefault();
+				ipcRenderer.send('open-file');
+				break;
+
+			case e.key === 's' && e.shiftKey:
+				e.preventDefault();
+				ipcRenderer.send('save-file-as', editor.data.get());
+				break;
+
+			case e.key === 's' && !e.shiftKey:
+				e.preventDefault();
+				if (window.currentFilePath) {
+					ipcRenderer.send('save-file', editor.data.get());
+				} else {
+					ipcRenderer.send('save-file-as', editor.data.get());
+				}
+				break;
+
+			case e.key === 'p':
+				e.preventDefault();
+				ipcRenderer.send('show-pdf-export', { content: editor.data.get(), margins: { top: 15, right: 15, bottom: 15, left: 15 } });
+				break;
+
+			case e.key === '=' || e.key === '+':
+				e.preventDefault();
+				document.getElementById('zoom-in')?.click();
+				break;
+
+			case e.key === '-':
+				e.preventDefault();
+				document.getElementById('zoom-out')?.click();
+				break;
+
+			case e.key === '0':
+				e.preventDefault();
+				document.getElementById('zoom-reset')?.click();
+				break;
+		}
+	});
 }
 
 function setupAISidebarResize() {

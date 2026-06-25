@@ -8,7 +8,8 @@
     "start": "npm run build:renderer && electron . --no-sandbox",
     "dev": "npm run build:renderer && electron . --no-sandbox",
     "build": "npm run build:renderer && electron-builder",
-    "build:linux": "npm run build:renderer && electron-builder --linux"
+    "build:linux": "npm run build:renderer && electron-builder --linux",
+    "build:windows": "npm run build:renderer && electron-builder --win"
   },
   "keywords": [
     "electron",
@@ -26,7 +27,7 @@
     "autoprefixer": "^10.4.27",
     "ckeditor5": "^47.6.1",
     "daisyui": "^5.5.19",
-    "electron": "^41.1.0",
+    "electron": "^41.9.0",
     "electron-builder": "^26.8.1",
     "postcss": "^8.5.8",
     "tailwindcss": "^4.2.2",
@@ -37,6 +38,7 @@
     "productName": "WYSIWYG HTML Editor",
     "files": [
       "main.js",
+      "preload.js",
       "store.js",
       "grammalecte-wrapper.js",
       "grammalecte-wrapper/**/*",
@@ -53,6 +55,16 @@
         "deb"
       ],
       "category": "TextEditor"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
     }
+  },
+  "allowScripts": {
+    "electron-winstaller@5.4.0": true,
+    "electron@41.9.0": true
   }
 }

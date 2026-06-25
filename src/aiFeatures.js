@@ -33,8 +33,13 @@ export class AIFeatures {
 	 * Initialize AI features
 	 */
 	async initialize() {
+		this.statusIndicator = document.getElementById('ai-status-indicator');
+		this.statusText = document.getElementById('ai-status-text');
+		this.alertElement = document.getElementById('ai-ollama-alert');
 		await this.checkConnection();
-		await this.loadModels();
+		if (this.isConnected) {
+			await this.loadModels();
+		}
 		this.setupEventListeners();
 	}
 
@@ -42,6 +47,13 @@ export class AIFeatures {
 	 * Check Ollama connection status
 	 */
 	async checkConnection() {
+		this.statusIndicator?.classList.remove('connected', 'disconnected');
+		this.statusIndicator?.classList.add('checking');
+		if (this.statusText) {
+			this.statusText.textContent = 'Vérification de la connexion...';
+		}
+		this.hideAlert();
+
 		this.isConnected = await checkOllamaConnection();
 		this.updateConnectionStatus();
 		return this.isConnected;
@@ -61,14 +73,44 @@ export class AIFeatures {
 	 * Update connection status display
 	 */
 	updateConnectionStatus() {
-		if (this.statusElement) {
-			if (this.isConnected) {
-				this.statusElement.textContent = `Connected (${this.selectedModel})`;
-				this.statusElement.className = 'ai-status connected';
-			} else {
-				this.statusElement.textContent = 'Disconnected - Is Ollama running?';
-				this.statusElement.className = 'ai-status disconnected';
+		if (this.statusIndicator) {
+			this.statusIndicator.classList.remove('connected', 'disconnected', 'checking');
+		}
+		if (this.isConnected) {
+			if (this.statusIndicator) {
+				this.statusIndicator.classList.add('connected');
 			}
+			if (this.statusText) {
+				this.statusText.textContent = `Connecté (${this.selectedModel})`;
+			}
+			this.hideAlert();
+		} else {
+			if (this.statusIndicator) {
+				this.statusIndicator.classList.add('disconnected');
+			}
+			if (this.statusText) {
+				this.statusText.textContent = 'Déconnecté';
+			}
+			this.showAlert();
+			this.enableActionButtons(false);
+		}
+	}
+
+	/**
+	 * Show Ollama not available alert
+	 */
+	showAlert() {
+		if (this.alertElement) {
+			this.alertElement.style.display = 'flex';
+		}
+	}
+
+	/**
+	 * Hide Ollama not available alert
+	 */
+	hideAlert() {
+		if (this.alertElement) {
+			this.alertElement.style.display = 'none';
 		}
 	}
 
@@ -137,6 +179,12 @@ export class AIFeatures {
 				this.selectedModel = e.target.value;
 				this.updateConnectionStatus();
 			});
+		}
+
+		// Retry connection button
+		const retryBtn = document.getElementById('ai-retry-connection');
+		if (retryBtn) {
+			retryBtn.addEventListener('click', () => this.refreshConnection());
 		}
 	}
 

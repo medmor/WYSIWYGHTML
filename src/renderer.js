@@ -67,7 +67,6 @@ import 'ckeditor5/ckeditor5.css';
 import './style.css';
 
 // AI Integration imports
-import { checkOllamaConnection, getAvailableModels } from './ollamaClient.js';
 import { AIFeatures } from './aiFeatures.js';
 
 // Grammalecte grammar checking
@@ -616,47 +615,8 @@ function setupFileButtons(editor, navbar) {
  * Initialize AI Features integration
  */
 async function initializeAIFeatures(editor) {
-	const statusElement = document.getElementById('ai-status');
-	const modelSelect = document.getElementById('ai-model');
-
-	try {
-		const isConnected = await checkOllamaConnection();
-		if (isConnected && statusElement) {
-			statusElement.textContent = 'Connecté';
-			statusElement.className = 'ai-status connected';
-
-			const models = await getAvailableModels();
-			
-			if (modelSelect) {
-				if (models.length > 0) {
-					modelSelect.innerHTML = models.map(model => 
-						`<option value="${model}">${model}</option>`
-					).join('');
-				} else {
-					modelSelect.innerHTML = '<option value="">Aucun modèle trouvé</option>';
-					console.warn('No Ollama models found. Make sure to pull a model: ollama pull llama3');
-				}
-			}
-		} else if (statusElement) {
-			statusElement.textContent = 'Déconnecté';
-			statusElement.className = 'ai-status disconnected';
-			if (modelSelect) {
-				modelSelect.innerHTML = '<option value="">Ollama non disponible</option>';
-			}
-		}
-	} catch (error) {
-		console.warn('Ollama connection failed:', error.message);
-		if (statusElement) {
-			statusElement.textContent = 'Déconnecté';
-			statusElement.className = 'ai-status disconnected';
-		}
-		if (modelSelect) {
-			modelSelect.innerHTML = '<option value="">Erreur de connexion</option>';
-		}
-	}
-
 	const aiFeatures = new AIFeatures(editor);
-	aiFeatures.initialize();
+	await aiFeatures.initialize();
 	window.aiFeatures = aiFeatures;
 }
 

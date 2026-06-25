@@ -31,5 +31,3 @@ Thumbs.db
 main.cjs
 src/main.js
 src/styles.css
-vite.config.js
-package-lock.json

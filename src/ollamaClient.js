@@ -19,7 +19,6 @@ export async function checkOllamaConnection(baseUrl = OLLAMA_DEFAULT_URL) {
 		});
 		return response.ok;
 	} catch (error) {
-		console.error('Ollama connection check failed:', error);
 		return false;
 	}
 }

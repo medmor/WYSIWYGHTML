@@ -3,6 +3,8 @@
  * Provides AI-powered features for the CKEditor 5 WYSIWYG editor
  */
 
+import { t } from './i18n.js';
+
 import {
 	checkOllamaConnection,
 	getAvailableModels,
@@ -50,7 +52,7 @@ export class AIFeatures {
 		this.statusIndicator?.classList.remove('connected', 'disconnected');
 		this.statusIndicator?.classList.add('checking');
 		if (this.statusText) {
-			this.statusText.textContent = 'Vérification de la connexion...';
+			this.statusText.textContent = t('aiCheckStatus');
 		}
 		this.hideAlert();
 
@@ -81,7 +83,7 @@ export class AIFeatures {
 				this.statusIndicator.classList.add('connected');
 			}
 			if (this.statusText) {
-				this.statusText.textContent = `Connecté (${this.selectedModel})`;
+				this.statusText.textContent = t('aiStatusConnected').replace('{model}', this.selectedModel);
 			}
 			this.hideAlert();
 		} else {
@@ -89,7 +91,7 @@ export class AIFeatures {
 				this.statusIndicator.classList.add('disconnected');
 			}
 			if (this.statusText) {
-				this.statusText.textContent = 'Déconnecté';
+				this.statusText.textContent = t('aiStatusDisconnected');
 			}
 			this.showAlert();
 			this.enableActionButtons(false);
@@ -257,12 +259,12 @@ export class AIFeatures {
 		const prompt = this.promptElement?.value || document.getElementById('ai-prompt')?.value;
 		
 		if (!prompt?.trim()) {
-			this.showError('Please enter a prompt');
+			this.showError(t('aiPromptEmpty'));
 			return;
 		}
 
 		if (!this.isConnected) {
-			this.showError('Not connected to Ollama. Please check if Ollama is running.');
+			this.showError(t('aiNotConnected'));
 			return;
 		}
 
@@ -290,12 +292,12 @@ export class AIFeatures {
 		const selectedText = this.getSelectedText();
 		
 		if (!selectedText) {
-			this.showError('Please select some text to fix');
+			this.showError(t('aiSelectTextFix'));
 			return;
 		}
 
 		if (!this.isConnected) {
-			this.showError('Not connected to Ollama. Please check if Ollama is running.');
+			this.showError(t('aiNotConnected'));
 			return;
 		}
 
@@ -322,12 +324,12 @@ export class AIFeatures {
 		const selectedText = this.getSelectedText();
 		
 		if (!selectedText) {
-			this.showError('Please select some text to complete');
+			this.showError(t('aiSelectTextComplete'));
 			return;
 		}
 
 		if (!this.isConnected) {
-			this.showError('Not connected to Ollama. Please check if Ollama is running.');
+			this.showError(t('aiNotConnected'));
 			return;
 		}
 
@@ -363,7 +365,7 @@ export class AIFeatures {
 		const output = outputEl?.innerHTML;
 		
 		if (!output) {
-			this.showError('No content to insert');
+			this.showError(t('aiNoContent'));
 			return;
 		}
 

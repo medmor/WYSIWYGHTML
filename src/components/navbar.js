@@ -1,7 +1,9 @@
 /**
  * Navbar Component
- * Handles the top menu bar with file operations, zoom controls, and theme toggle
+ * Handles the top menu bar with file operations, zoom controls, theme and language
  */
+
+import { t, getLanguage } from '../i18n.js';
 
 /**
  * Creates the navbar HTML structure
@@ -16,23 +18,23 @@ export function createNavbarHTML() {
       <div class="join">
         <button id="new-file" class="btn btn-ghost btn-sm join-item">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
-          Nouveau
+          <span data-i18n="newFile">Nouveau</span>
         </button>
         <button id="open-file" class="btn btn-ghost btn-sm join-item">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z" /></svg>
-          Ouvrir
+          <span data-i18n="open">Ouvrir</span>
         </button>
         <button id="save-file" class="btn btn-ghost btn-sm join-item">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
-          Enregistrer
+          <span data-i18n="save">Enregistrer</span>
         </button>
          <button id="save-file-as" class="btn btn-ghost btn-sm join-item">
            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
-           Enregistrer sous
+           <span data-i18n="saveAs">Enregistrer sous</span>
          </button>
        </div>
-       <span id="current-file-path" class="text-sm text-base-content/70 truncate max-w-48" title="Nouveau fichier">Nouveau fichier</span>
-       <span id="save-status" class="save-status saved" title="Aucune modification">
+       <span id="current-file-path" class="text-sm text-base-content/70 truncate max-w-48" data-i18n="newDocument" data-i18n-title="newDocument">Nouveau fichier</span>
+       <span id="save-status" class="save-status saved" data-i18n-title="noChanges" title="Aucune modification">
          <svg class="save-icon-saved" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
          <svg class="save-icon-dirty" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6"></circle></svg>
        </span>
@@ -42,18 +44,23 @@ export function createNavbarHTML() {
     <div class="navbar-end gap-2">
       <!-- Preview and Export buttons -->
       <div class="join">
-        <button id="export-pdf" class="btn btn-ghost btn-sm join-item" title="Exporter en PDF">
+        <button id="export-pdf" class="btn btn-ghost btn-sm join-item" data-i18n-title="exportPdf" title="Exporter en PDF">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-          PDF
+          <span data-i18n="pdf">PDF</span>
         </button>
       </div>
       
       <div class="join">
-        <button id="zoom-out" class="btn btn-ghost btn-sm join-item" title="Zoom arrière">−</button>
+        <button id="zoom-out" class="btn btn-ghost btn-sm join-item" data-i18n-title="zoomOut" title="Zoom arrière">−</button>
         <span id="zoom-level" class="btn btn-ghost btn-sm join-item pointer-events-none min-w-16">100%</span>
-        <button id="zoom-in" class="btn btn-ghost btn-sm join-item" title="Zoom avant">+</button>
-        <button id="zoom-reset" class="btn btn-ghost btn-sm join-item" title="Réinitialiser">⟲</button>
+        <button id="zoom-in" class="btn btn-ghost btn-sm join-item" data-i18n-title="zoomIn" title="Zoom avant">+</button>
+        <button id="zoom-reset" class="btn btn-ghost btn-sm join-item" data-i18n-title="resetZoom" title="Réinitialiser">⟲</button>
       </div>
+
+      <!-- Language toggle -->
+      <button id="language-toggle" class="btn btn-ghost btn-sm join-item font-medium" data-i18n-title="languageToggle" title="Changer la langue">
+        <span id="language-toggle-label"></span>
+      </button>
       
       <!-- Theme toggle -->
       <label class="swap swap-rotate btn btn-ghost btn-circle">
@@ -89,9 +96,14 @@ export function initNavbar(options = {}) {
     });
   }
 
-  let currentFilePath = 'Nouveau fichier';
+  let currentFilePath = t('newDocument');
   const filePathElement = document.getElementById('current-file-path');
   const saveStatusElement = document.getElementById('save-status');
+
+  const languageToggleLabel = document.getElementById('language-toggle-label');
+  if (languageToggleLabel) {
+    languageToggleLabel.textContent = getLanguage() === 'fr' ? t('langAr') : t('langFr');
+  }
 
   return {
     setFilePath(name) {
@@ -108,11 +120,11 @@ export function initNavbar(options = {}) {
       if (dirty) {
         saveStatusElement.classList.remove('saved');
         saveStatusElement.classList.add('dirty');
-        saveStatusElement.title = 'Modifications non enregistrées';
+        saveStatusElement.title = t('unsavedChanges');
       } else {
         saveStatusElement.classList.remove('dirty');
         saveStatusElement.classList.add('saved');
-        saveStatusElement.title = 'Aucune modification';
+        saveStatusElement.title = t('noChanges');
       }
     }
   };

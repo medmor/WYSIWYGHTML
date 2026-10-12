@@ -3,6 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    // Apply persisted language/direction before first paint to avoid a flash.
+    (function () {
+      try {
+        var lang = localStorage.getItem('appLanguage') === 'ar' ? 'ar' : 'fr';
+        document.documentElement.setAttribute('lang', lang);
+        document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+      } catch (e) {}
+    })();
+  </script>
   <title>WYSIWYG HTML Editor</title>
   <!-- Styles bundled by Vite (CKEditor + Tailwind CSS + DaisyUI) -->
   <link rel="stylesheet" href="dist/assets/renderer.css">
@@ -13,12 +23,12 @@
 
   <div class="app-container">
     <!-- AI Sidebar with DaisyUI -->
-    <aside class="ai-sidebar bg-base-200 border-l border-base-300" id="ai-sidebar">
+<aside class="ai-sidebar bg-base-200 border-s border-base-300" id="ai-sidebar">
       <div class="resize-handle" id="ai-sidebar-resize"></div>
       <div class="p-4 border-b border-base-300 flex items-center justify-between">
         <h3 class="text-lg font-semibold flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-          AI Assistant
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1 1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+          <span data-i18n="aiAssistant">AI Assistant</span>
         </h3>
 
       </div>
@@ -27,68 +37,68 @@
         <!-- Connection Status -->
         <div class="flex items-center gap-2">
           <span class="status-indicator" id="ai-status-indicator">●</span>
-          <span class="text-sm" id="ai-status-text">Vérification de la connexion...</span>
+          <span class="text-sm" id="ai-status-text" data-i18n="aiCheckStatus">Vérification de la connexion...</span>
         </div>
 
         <!-- Ollama Not Available Alert -->
         <div id="ai-ollama-alert" class="alert alert-warning flex flex-col items-start gap-2 py-3" style="display:none;">
           <div class="flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-            <span class="font-semibold text-sm">Ollama non disponible</span>
+            <span class="font-semibold text-sm" data-i18n="aiNotAvailable">Ollama non disponible</span>
           </div>
-          <p class="text-xs opacity-80">L'assistant IA nécessite Ollama. Démarrez-le avec :</p>
+          <p class="text-xs opacity-80" data-i18n="aiNotAvailableDesc">L'assistant IA nécessite Ollama. Démarrez-le avec :</p>
           <code class="text-xs bg-base-300 px-2 py-1 rounded">ollama serve</code>
-          <button id="ai-retry-connection" class="btn btn-warning btn-xs mt-1">Réessayer</button>
+          <button id="ai-retry-connection" class="btn btn-warning btn-xs mt-1" data-i18n="aiRetry">Réessayer</button>
         </div>
         
         <!-- Model Selection -->
         <div class="form-control">
           <label class="label" for="ai-model">
-            <span class="label-text">Modèle</span>
+            <span class="label-text" data-i18n="aiModel">Modèle</span>
           </label>
           <select id="ai-model" class="select select-bordered select-sm w-full" disabled>
-            <option value="">Chargement...</option>
+            <option value="" data-i18n="aiLoading">Chargement...</option>
           </select>
         </div>
         
         <!-- Prompt Input -->
         <div class="form-control">
           <label class="label" for="ai-prompt">
-            <span class="label-text">Prompt</span>
+            <span class="label-text" data-i18n="aiPrompt">Prompt</span>
           </label>
-          <textarea id="ai-prompt" class="textarea textarea-bordered textarea-sm w-full" rows="4" placeholder="Décrivez ce que vous voulez générer..."></textarea>
+          <textarea id="ai-prompt" class="textarea textarea-bordered textarea-sm w-full" rows="4" data-i18n-placeholder="aiPromptPlaceholder" placeholder="Décrivez ce que vous voulez générer..."></textarea>
         </div>
         
         <!-- Action Buttons -->
         <div class="flex flex-wrap gap-2">
           <button id="ai-generate" class="btn btn-primary btn-sm flex-1" disabled>
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
-            Générer
+            <span data-i18n="aiGenerate">Générer</span>
           </button>
           <button id="ai-fix-grammar" class="btn btn-ghost btn-sm" disabled>
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-            Corriger
+            <span data-i18n="aiFixGrammar">Corriger</span>
           </button>
           <button id="ai-complete" class="btn btn-ghost btn-sm" disabled>
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
-            Compléter
+            <span data-i18n="aiComplete">Compléter</span>
           </button>
         </div>
         
         <!-- Output Area -->
         <div class="form-control">
           <label class="label">
-            <span class="label-text">Résultat</span>
+            <span class="label-text" data-i18n="aiResult">Résultat</span>
           </label>
           <div class="bg-base-100 border border-base-300 rounded-lg p-3 min-h-32 overflow-y-auto" id="ai-output">
-            <p class="text-base-content/50 italic">Le résultat apparaîtra ici...</p>
+            <p class="text-base-content/50 italic" data-i18n="aiResultPlaceholder">Le résultat apparaîtra ici...</p>
           </div>
         </div>
         
         <!-- Insert Button -->
         <button id="ai-insert" class="btn btn-success btn-sm" disabled>
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-          Insérer dans l'éditeur
+          <span data-i18n="aiInsert">Insérer dans l'éditeur</span>
         </button>
       </div>
     </aside>

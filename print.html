@@ -192,6 +192,19 @@
       background: none;
       padding: 0;
     }
+
+    /* RTL document overrides */
+    #print-content[dir="rtl"] ul,
+    #print-content[dir="rtl"] ol {
+      padding-left: 0;
+      padding-right: 1.5em;
+    }
+
+    #print-content[dir="rtl"] blockquote {
+      border-left: none;
+      border-right: 4px solid #d1d5db;
+      border-radius: 8px 0 0 8px;
+    }
     
     /* Print styles */
     @media print {
@@ -224,7 +237,7 @@
 </head>
 <body>
   <div id="toolbar">
-    <h1>Exporter en PDF</h1>
+    <h1 id="toolbar-title">Exporter en PDF</h1>
     <div class="toolbar-controls">
       <label for="margin-select">Marges :</label>
       <select id="margin-select">
@@ -245,6 +258,41 @@
 
   <script>
     let currentMargins = { top: 15, right: 15, bottom: 15, left: 15 };
+    let currentLang = 'fr';
+
+    const PRINT_I18N = {
+      fr: {
+        title: 'Exporter en PDF',
+        margins: 'Marges :',
+        saveBtn: 'Enregistrer en PDF',
+        loading: 'Chargement...',
+        empty: 'Aucun contenu',
+        saved: 'PDF enregistré: ',
+        error: 'Erreur: '
+      },
+      ar: {
+        title: 'تصدير PDF',
+        margins: 'الهوامش:',
+        saveBtn: 'حفظ PDF',
+        loading: 'جارٍ التحميل...',
+        empty: 'لا يوجد محتوى',
+        saved: 'تم حفظ PDF: ',
+        error: 'خطأ: '
+      }
+    };
+
+    function translatePrintUI(lang) {
+      currentLang = lang === 'ar' ? 'ar' : 'fr';
+      const s = PRINT_I18N[currentLang];
+      document.documentElement.setAttribute('lang', currentLang);
+      document.documentElement.setAttribute('dir', currentLang === 'ar' ? 'rtl' : 'ltr');
+      const title = document.getElementById('toolbar-title');
+      if (title) title.textContent = s.title;
+      const marginLabel = document.querySelector('label[for="margin-select"]');
+      if (marginLabel) marginLabel.textContent = s.margins;
+      const saveBtn = document.getElementById('save-pdf-btn');
+      if (saveBtn) saveBtn.textContent = s.saveBtn;
+    }
 
     function applyMargins(marginMm) {
       currentMargins = { top: marginMm, right: marginMm, bottom: marginMm, left: marginMm };
@@ -280,21 +328,25 @@
           try {
             const result = await window.electronAPI.saveToPdf(currentMargins);
             if (result.success) {
-              alert('PDF enregistré: ' + result.filePath);
+              alert(PRINT_I18N[currentLang].saved + result.filePath);
             } else if (result.error !== 'Cancelled') {
-              alert('Erreur: ' + result.error);
+              alert(PRINT_I18N[currentLang].error + result.error);
             }
           } catch (err) {
             console.error('[Print Preview] Save error:', err);
-            alert('Erreur: ' + err.message);
+            alert(PRINT_I18N[currentLang].error + err.message);
           }
         });
       }
     });
 
     window.electronAPI.onPrintContent((data) => {
+      translatePrintUI(data.lang || 'fr');
+
       const contentDiv = document.getElementById('print-content');
-      contentDiv.innerHTML = data.content || '<p>Aucun contenu</p>';
+      contentDiv.innerHTML = data.content || '<p>' + PRINT_I18N[currentLang].empty + '</p>';
+      contentDiv.setAttribute('dir', data.dir === 'rtl' ? 'rtl' : 'ltr');
+      contentDiv.setAttribute('lang', data.lang || 'fr');
 
       if (data.styles) {
         const newStyleEl = document.createElement('style');

@@ -63,7 +63,8 @@ import {
 	BlockToolbar
 } from 'ckeditor5';
 
-import translations from 'ckeditor5/translations/fr.js';
+import frTranslations from 'ckeditor5/translations/fr.js';
+import arTranslations from 'ckeditor5/translations/ar.js';
 import 'ckeditor5/ckeditor5.css';
 import './style.css';
 
@@ -76,13 +77,23 @@ import { GrammalectePlugin } from './grammalectePlugin.js';
 // UI Components
 import { createNavbarHTML, initNavbar } from './components/navbar.js';
 
+// i18n (French / Arabic)
+import { getLanguage, setLanguage, getOtherLanguage, t, getDirection, applyLanguageToDocument } from './i18n.js';
+
 const LICENSE_KEY = 'GPL';
 
 // Unsaved changes tracking
 let isDirty = false;
 let lastSavedContent = '';
 
-const editorConfig = {
+// True while a language switch is reloading the window (bypasses the
+// beforeunload "unsaved changes" guard; the state is preserved in the session).
+let isSwitchingLanguage = false;
+
+function buildEditorConfig(lang = getLanguage()) {
+	const isRtl = getDirection(lang) === 'rtl';
+
+	return {
 	toolbar: {
 		items: [
 			'undo',
@@ -126,7 +137,7 @@ const editorConfig = {
 			'todoList',
 			'outdent',
 			'indent'
-		],
+		].filter(item => !isRtl || item !== 'grammalecteCheck'),
 		shouldNotGroupWhenFull: false
 	},
 	plugins: [
@@ -150,7 +161,7 @@ const editorConfig = {
 		FontSize,
 		Fullscreen,
 		GeneralHtmlSupport,
-		GrammalectePlugin,
+		...(isRtl ? [] : [GrammalectePlugin]),
 		Heading,
 		HorizontalLine,
 		HtmlComment,
@@ -206,6 +217,16 @@ const editorConfig = {
 		'indent'
 	],
 	fontFamily: {
+		options: [
+			'default',
+			'Lato',
+			'Cairo',
+			'Amiri',
+			'Arial',
+			'Georgia',
+			'Trebuchet MS',
+			'Verdana'
+		],
 		supportAllValues: true
 	},
 	fontSize: {
@@ -226,43 +247,36 @@ const editorConfig = {
 		options: [
 			{
 				model: 'paragraph',
-				title: 'Paragraph',
 				class: 'ck-heading_paragraph'
 			},
 			{
 				model: 'heading1',
 				view: 'h1',
-				title: 'Heading 1',
 				class: 'ck-heading_heading1'
 			},
 			{
 				model: 'heading2',
 				view: 'h2',
-				title: 'Heading 2',
 				class: 'ck-heading_heading2'
 			},
 			{
 				model: 'heading3',
 				view: 'h3',
-				title: 'Heading 3',
 				class: 'ck-heading_heading3'
 			},
 			{
 				model: 'heading4',
 				view: 'h4',
-				title: 'Heading 4',
 				class: 'ck-heading_heading4'
 			},
 			{
 				model: 'heading5',
 				view: 'h5',
-				title: 'Heading 5',
 				class: 'ck-heading_heading5'
 			},
 			{
 				model: 'heading6',
 				view: 'h6',
-				title: 'Heading 6',
 				class: 'ck-heading_heading6'
 			}
 		]
@@ -280,7 +294,10 @@ const editorConfig = {
 	image: {
 		toolbar: ['toggleImageCaption', 'imageTextAlternative', '|', 'imageStyle:inline', 'imageStyle:wrapText', 'imageStyle:breakText']
 	},
-	language: 'fr',
+	language: {
+		ui: lang,
+		content: lang
+	},
 	licenseKey: LICENSE_KEY,
 	link: {
 		addTargetToExternalLinks: true,
@@ -303,7 +320,7 @@ const editorConfig = {
 			}
 		]
 	},
-	placeholder: 'Tapez ou collez votre contenu ici !',
+	placeholder: t('editorPlaceholder'),
 	style: {
 		definitions: [
 			{
@@ -355,7 +372,7 @@ const editorConfig = {
 		save: (editor) => {
 			const api = window.electronAPI;
 			if (!api) return Promise.resolve();
-			const content = editor.data.get();
+			const content = getSaveContent(editor);
 			if (window.currentFilePath) {
 				return new Promise(resolve => {
 					api.saveFile(content);
@@ -368,8 +385,9 @@ const editorConfig = {
 		},
 		waitingTime: 5000
 	},
-	translations: [translations]
-};
+	translations: [frTranslations, arTranslations]
+	};
+}
 
 // Initialize Navbar component
 const navbarContainer = document.getElementById('navbar-container');
@@ -377,6 +395,10 @@ if (navbarContainer) {
 	navbarContainer.innerHTML = createNavbarHTML();
 }
 const navbar = initNavbar();
+
+// Apply the persisted language/direction to the app chrome (html lang/dir,
+// data-i18n elements) now that the navbar exists.
+applyLanguageToDocument();
 
 // Track unsaved changes
 function markDirty() {
@@ -396,8 +418,115 @@ function checkUnsaved() {
 	return isDirty;
 }
 
+const SESSION_KEY = 'editorSession';
+
+/**
+ * Persist the current document so it can be restored after a language switch.
+ * @param {import('ckeditor5').Editor} editor
+ */
+function stashSession(editor) {
+	try {
+		sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+			content: editor.data.get(),
+			filePath: window.currentFilePath || null,
+			dirty: isDirty
+		}));
+	} catch (e) {
+		console.error('Could not stash editor session:', e);
+	}
+}
+
+/**
+ * Restore the document that was open when switching languages.
+ * @param {import('ckeditor5').Editor} editor
+ * @param {Object} navbar
+ */
+function restoreSession(editor, navbar) {
+	let session = null;
+	try {
+		session = JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null');
+	} catch (e) {
+		session = null;
+	}
+	if (!session) return;
+
+	sessionStorage.removeItem(SESSION_KEY);
+	if (session.content) {
+		editor.data.set(session.content);
+	}
+	window.currentFilePath = session.filePath || null;
+
+	if (session.filePath) {
+		const fileName = session.filePath.split('/').pop().split('\\').pop();
+		document.title = `WYSIWYG HTML Editor : ${fileName}`;
+		if (navbar) navbar.setFilePath(fileName);
+	} else {
+		document.title = t('appTitleNew');
+		if (navbar) navbar.setFilePath(t('newDocument'));
+	}
+
+	if (session.dirty) {
+		isDirty = true;
+		if (navbar) navbar.setSaveStatus(true);
+	} else {
+		markClean();
+	}
+}
+
+/**
+ * Wire the FR/AR language toggle. CKEditor 5 cannot change its UI language at
+ * runtime, so we stash the document, persist the language and reload.
+ * @param {import('ckeditor5').Editor} editor
+ */
+function setupLanguageToggle(editor) {
+	const toggle = document.getElementById('language-toggle');
+	if (!toggle) return;
+
+	toggle.addEventListener('click', () => {
+		stashSession(editor);
+		setLanguage(getOtherLanguage());
+		isSwitchingLanguage = true;
+		window.location.reload();
+	});
+}
+
+/**
+ * RTL documents wrap their content in a self-describing `<div dir="rtl">` so
+ * the direction survives outside the app (opening the fragment in a browser,
+ * printing, sharing). Already-wrapped content is left untouched so RTL files
+ * saved while the app is in LTR mode keep their direction.
+ * @param {import('ckeditor5').Editor} editor
+ * @returns {string}
+ */
+function getSaveContent(editor) {
+	const content = editor.data.get();
+	const hasRtlWrapper = /^\s*<div[^>]*\sdir=["']rtl["']/i.test(content);
+	if (hasRtlWrapper) {
+		return content;
+	}
+	if (editor.locale.contentLanguageDirection === 'rtl') {
+		return `<div dir="rtl" lang="${editor.locale.contentLanguage}">${content}</div>`;
+	}
+	return content;
+}
+
+/**
+ * Payload for the PDF export window, including the document direction/lang so
+ * print.html renders mixed-direction documents correctly.
+ * @param {import('ckeditor5').Editor} editor
+ * @returns {Object}
+ */
+function getPdfPayload(editor) {
+	return {
+		content: editor.data.get(),
+		margins: { top: 15, right: 15, bottom: 15, left: 15 },
+		dir: editor.locale.contentLanguageDirection,
+		lang: editor.locale.contentLanguage
+	};
+}
+
 // Initialize CKEditor
-DecoupledEditor.create(document.querySelector('#editor'), editorConfig)
+DecoupledEditor.create(document.querySelector('#editor'), buildEditorConfig())
 	.then(editor => {
 		// Attach toolbar and menu bar to the DOM
 		document.querySelector('#editor-toolbar').appendChild(editor.ui.view.toolbar.element);
@@ -405,6 +534,9 @@ DecoupledEditor.create(document.querySelector('#editor'), editorConfig)
 
 		// Make editor available globally
 		window.currentEditor = editor;
+
+		// Restore the document that was open when switching languages
+		restoreSession(editor, navbar);
 
 		// Set initial content as "saved"
 		lastSavedContent = editor.data.get();
@@ -424,6 +556,7 @@ DecoupledEditor.create(document.querySelector('#editor'), editorConfig)
 		setupIPCHandlers(editor, navbar);
 		setupKeyboardShortcuts(editor, navbar);
 		setupUnsavedChangesProtection();
+		setupLanguageToggle(editor);
 
 		// Initialize AI Features
 		initializeAIFeatures(editor);
@@ -451,7 +584,7 @@ function setupIPCHandlers(editor, navbar) {
 			if (navbar) navbar.setFilePath(fileName);
 			markClean();
 		} else {
-			alert('Erreur lors de l\'ouverture du fichier : ' + data.error);
+			alert(t('errorOpen') + data.error);
 		}
 	});
 
@@ -464,31 +597,31 @@ function setupIPCHandlers(editor, navbar) {
 			if (navbar) navbar.setFilePath(fileName);
 			markClean();
 		} else {
-			alert('Erreur lors de l\'enregistrement : ' + data.error);
+			alert(t('errorSave') + data.error);
 		}
 	});
 
 	// Global shortcut: new file
 	api.onShortcutNewFile(() => {
 		if (checkUnsaved()) {
-			if (!confirm('Vous avez des modifications non enregistrées. Voulez-vous continuer ?')) {
+			if (!confirm(t('unsavedPrompt'))) {
 				return;
 			}
 		}
 		editor.data.set('');
 		window.currentFilePath = null;
-		document.title = 'WYSIWYG HTML Editor : Nouveau document';
-		if (navbar) navbar.setFilePath('Nouveau fichier');
+		document.title = t('appTitleNew');
+		if (navbar) navbar.setFilePath(t('newDocument'));
 		markClean();
 	});
 
 	// Main process asks if there are unsaved changes before closing
 	api.onCheckUnsaved(() => {
 		if (checkUnsaved()) {
-			const choice = confirm('Vous avez des modifications non enregistrées. Voulez-vous les enregistrer avant de quitter ?');
+			const choice = confirm(t('unsavedQuitPrompt'));
 			if (choice) {
 				// User wants to save first
-				const content = editor.data.get();
+				const content = getSaveContent(editor);
 				if (window.currentFilePath) {
 					api.saveFile(content);
 				} else {
@@ -512,7 +645,7 @@ function setupIPCHandlers(editor, navbar) {
  */
 function setupUnsavedChangesProtection() {
 	window.addEventListener('beforeunload', (e) => {
-		if (checkUnsaved()) {
+		if (checkUnsaved() && !isSwitchingLanguage) {
 			e.preventDefault();
 			e.returnValue = '';
 		}
@@ -528,21 +661,21 @@ function setupFileButtons(editor, navbar) {
 	// New file button
 	document.getElementById('new-file').addEventListener('click', () => {
 		if (checkUnsaved()) {
-			if (!confirm('Vous avez des modifications non enregistrées. Voulez-vous continuer ?')) {
+			if (!confirm(t('unsavedPrompt'))) {
 				return;
 			}
 		}
 		editor.data.set('');
 		window.currentFilePath = null;
-		document.title = 'WYSIWYG HTML Editor : Nouveau document';
-		if (navbar) navbar.setFilePath('Nouveau fichier');
+		document.title = t('appTitleNew');
+		if (navbar) navbar.setFilePath(t('newDocument'));
 		markClean();
 	});
 
 	// Open file button
 	document.getElementById('open-file').addEventListener('click', () => {
 		if (checkUnsaved()) {
-			if (!confirm('Vous avez des modifications non enregistrées. Voulez-vous continuer ?')) {
+			if (!confirm(t('unsavedPrompt'))) {
 				return;
 			}
 		}
@@ -551,7 +684,7 @@ function setupFileButtons(editor, navbar) {
 
 	// Save file button
 	document.getElementById('save-file').addEventListener('click', () => {
-		const content = editor.data.get();
+		const content = getSaveContent(editor);
 		if (window.currentFilePath) {
 			api.saveFile(content);
 		} else {
@@ -561,8 +694,7 @@ function setupFileButtons(editor, navbar) {
 
 	// Save file as button
 	document.getElementById('save-file-as').addEventListener('click', () => {
-		const content = editor.data.get();
-		api.saveFileAs(content);
+		api.saveFileAs(getSaveContent(editor));
 	});
 
 	// Zoom controls
@@ -609,8 +741,7 @@ function setupFileButtons(editor, navbar) {
 
 	// Export PDF button
 	document.getElementById('export-pdf').addEventListener('click', () => {
-		const content = editor.data.get();
-		api.showPdfExport({ content, margins: { top: 15, right: 15, bottom: 15, left: 15 } });
+		api.showPdfExport(getPdfPayload(editor));
 	});
 }
 
@@ -638,21 +769,21 @@ function setupKeyboardShortcuts(editor, navbar) {
 			case e.key === 'n' && !e.shiftKey:
 				e.preventDefault();
 				if (checkUnsaved()) {
-					if (!confirm('Vous avez des modifications non enregistrées. Voulez-vous continuer ?')) {
+					if (!confirm(t('unsavedPrompt'))) {
 						return;
 					}
 				}
 				editor.data.set('');
 				window.currentFilePath = null;
-				document.title = 'WYSIWYG HTML Editor : Nouveau document';
-				if (navbar) navbar.setFilePath('Nouveau fichier');
+				document.title = t('appTitleNew');
+				if (navbar) navbar.setFilePath(t('newDocument'));
 				markClean();
 				break;
 
 			case e.key === 'o':
 				e.preventDefault();
 				if (checkUnsaved()) {
-					if (!confirm('Vous avez des modifications non enregistrées. Voulez-vous continuer ?')) {
+					if (!confirm(t('unsavedPrompt'))) {
 						return;
 					}
 				}
@@ -661,21 +792,21 @@ function setupKeyboardShortcuts(editor, navbar) {
 
 			case e.key === 's' && e.shiftKey:
 				e.preventDefault();
-				api.saveFileAs(editor.data.get());
+				api.saveFileAs(getSaveContent(editor));
 				break;
 
 			case e.key === 's' && !e.shiftKey:
 				e.preventDefault();
 				if (window.currentFilePath) {
-					api.saveFile(editor.data.get());
+					api.saveFile(getSaveContent(editor));
 				} else {
-					api.saveFileAs(editor.data.get());
+					api.saveFileAs(getSaveContent(editor));
 				}
 				break;
 
 			case e.key === 'p':
 				e.preventDefault();
-				api.showPdfExport({ content: editor.data.get(), margins: { top: 15, right: 15, bottom: 15, left: 15 } });
+				api.showPdfExport(getPdfPayload(editor));
 				break;
 
 			case e.key === '=' || e.key === '+':

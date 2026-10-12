@@ -194,7 +194,9 @@ ipcMain.on('show-pdf-export', (event, data) => {
     pdfWindow.webContents.send('print-content', {
       content: data.content,
       styles: data.styles,
-      margins: data.margins
+      margins: data.margins,
+      dir: data.dir,
+      lang: data.lang
     });
   });
 

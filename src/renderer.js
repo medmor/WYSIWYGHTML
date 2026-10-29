@@ -35,6 +35,7 @@ import {
 	ImageToolbar,
 	ImageInline,
 	ImageInsertViaUrl,
+	ImageResize,
 	AutoImage,
 	CloudServices,
 	ImageUpload,
@@ -200,6 +201,7 @@ function buildEditorConfig(lang = getLanguage()) {
 		ImageEditing,
 		ImageInline,
 		ImageInsertViaUrl,
+		ImageResize,
 		ImageStyle,
 		ImageTextAlternative,
 		ImageToolbar,
@@ -325,7 +327,14 @@ function buildEditorConfig(lang = getLanguage()) {
 		]
 	},
 	image: {
-		toolbar: ['toggleImageCaption', 'imageTextAlternative', '|', 'imageStyle:inline', 'imageStyle:wrapText', 'imageStyle:breakText']
+		resizeUnit: '%',
+		resizeOptions: [
+			{ name: 'resizeImage:original', value: null },
+			{ name: 'resizeImage:25', value: '25' },
+			{ name: 'resizeImage:50', value: '50' },
+			{ name: 'resizeImage:75', value: '75' }
+		],
+		toolbar: ['toggleImageCaption', 'imageTextAlternative', '|', 'resizeImage', '|', 'imageStyle:inline', 'imageStyle:wrapText', 'imageStyle:breakText']
 	},
 	language: {
 		ui: lang,

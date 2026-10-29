@@ -281,15 +281,67 @@
 
 .editor-container_document-editor .editor-container__editor .ck.ck-editor__editable {
 	box-sizing: border-box;
-	min-width: calc(210mm + 2px);
-	max-width: calc(210mm + 2px);
-	min-height: 297mm;
+	min-width: calc(var(--page-width, 210mm) + 2px);
+	max-width: calc(var(--page-width, 210mm) + 2px);
+	min-height: var(--page-height, 297mm);
 	height: fit-content;
-	padding: 20mm 12mm;
+	padding: var(--page-margin, 15mm);
 	border: 1px hsl(0, 0%, 82.7%) solid;
 	background: hsl(0, 0%, 100%);
 	box-shadow: 0 2px 3px hsla(0, 0%, 0%, 0.078);
 	flex: 1 1 auto;
+}
+
+/* ---- Pagination view (visual A4 page boundaries) ---- */
+.editor-container_paginated .editor-container__editor {
+	position: relative;
+}
+
+.pagination-overlay {
+	position: absolute;
+	pointer-events: none;
+	z-index: 4;
+	overflow: visible;
+}
+
+.pagination-boundary {
+	position: absolute;
+	left: 0;
+	right: 0;
+	height: 0;
+	border-top: 1px dashed hsl(0, 0%, 72%);
+}
+
+.pagination-page-label {
+	position: absolute;
+	left: 100%;
+	margin-left: 8px;
+	transform: translateY(-50%);
+	min-width: 1.75rem;
+	padding: 1px 6px;
+	border-radius: 9999px;
+	background: hsl(0, 0%, 88%);
+	color: hsl(0, 0%, 30%);
+	font-size: 0.7rem;
+	line-height: 1.4;
+	text-align: center;
+	white-space: nowrap;
+}
+
+[dir="rtl"] .pagination-page-label {
+	left: auto;
+	right: 100%;
+	margin-left: 0;
+	margin-right: 8px;
+}
+
+[data-theme="dark"] .pagination-boundary {
+	border-top-color: hsl(0, 0%, 40%);
+}
+
+[data-theme="dark"] .pagination-page-label {
+	background: hsl(0, 0%, 25%);
+	color: hsl(0, 0%, 85%);
 }
 
 .editor-container__sidebar_ckeditor-ai:has(.ck-tabs.ck-hidden) {

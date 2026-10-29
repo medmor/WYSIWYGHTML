@@ -74,6 +74,12 @@ import { AIFeatures } from './aiFeatures.js';
 // Grammalecte grammar checking
 import { GrammalectePlugin } from './grammalectePlugin.js';
 
+// Live pagination (visual A4 page boundaries)
+import { paginationManager } from './pagination.js';
+
+// Shared page geometry (editor canvas + PDF export margins)
+import { PAGE, MARGIN_PRESETS_MM, PAGE_MARGIN_STORAGE_KEY } from './pageConfig.js';
+
 // UI Components
 import { createNavbarHTML, initNavbar } from './components/navbar.js';
 
@@ -81,6 +87,30 @@ import { createNavbarHTML, initNavbar } from './components/navbar.js';
 import { getLanguage, setLanguage, getOtherLanguage, t, getDirection, applyLanguageToDocument } from './i18n.js';
 
 const LICENSE_KEY = 'GPL';
+
+/**
+ * Current page margin (mm) from storage, falling back to the configured default.
+ * @returns {number}
+ */
+function getPageMargin() {
+	const saved = parseFloat(localStorage.getItem(PAGE_MARGIN_STORAGE_KEY));
+	return MARGIN_PRESETS_MM.includes(saved) ? saved : PAGE.defaultMarginMm;
+}
+
+/**
+ * Publish the page geometry as CSS custom properties so the editor canvas and
+ * the pagination overlay stay in sync with the configured page size/margins.
+ * @param {number} marginMm
+ */
+function applyPageGeometry(marginMm) {
+	const root = document.documentElement.style;
+	root.setProperty('--page-width', `${PAGE.widthMm}mm`);
+	root.setProperty('--page-height', `${PAGE.heightMm}mm`);
+	root.setProperty('--page-margin', `${marginMm}mm`);
+}
+
+// Apply the persisted page margin before the editor mounts.
+applyPageGeometry(getPageMargin());
 
 // Unsaved changes tracking
 let isDirty = false;
@@ -234,14 +264,17 @@ function buildEditorConfig(lang = getLanguage()) {
 		supportAllValues: true
 	},
 	fullscreen: {
-		onEnterCallback: container =>
+		onEnterCallback: container => {
 			container.classList.add(
 				'editor-container',
 				'editor-container_document-editor',
 				'editor-container_include-style',
 				'editor-container_include-fullscreen',
 				'main-container'
-			)
+			);
+			paginationManager.refresh();
+		},
+		onLeaveCallback: () => paginationManager.refresh()
 	},
 	heading: {
 		options: [
@@ -517,9 +550,10 @@ function getSaveContent(editor) {
  * @returns {Object}
  */
 function getPdfPayload(editor) {
+	const margin = getPageMargin();
 	return {
 		content: editor.data.get(),
-		margins: { top: 15, right: 15, bottom: 15, left: 15 },
+		margins: { top: margin, right: margin, bottom: margin, left: margin },
 		dir: editor.locale.contentLanguageDirection,
 		lang: editor.locale.contentLanguage
 	};
@@ -557,6 +591,9 @@ DecoupledEditor.create(document.querySelector('#editor'), buildEditorConfig())
 		setupKeyboardShortcuts(editor, navbar);
 		setupUnsavedChangesProtection();
 		setupLanguageToggle(editor);
+
+		// Initialize live pagination (A4 page boundaries overlay)
+		paginationManager.init(editor);
 
 		// Initialize AI Features
 		initializeAIFeatures(editor);
@@ -716,6 +753,7 @@ function setupFileButtons(editor, navbar) {
 			zoomLevelSpan.textContent = `${currentZoom}%`;
 		}
 		localStorage.setItem('zoomLevel', currentZoom.toString());
+		paginationManager.refresh();
 	}
 
 	updateZoom();
@@ -743,6 +781,27 @@ function setupFileButtons(editor, navbar) {
 	document.getElementById('export-pdf').addEventListener('click', () => {
 		api.showPdfExport(getPdfPayload(editor));
 	});
+
+	// Toggle pagination (A4 page boundaries) view
+	const paginationToggle = document.getElementById('toggle-pagination');
+	if (paginationToggle) {
+		paginationToggle.addEventListener('click', () => paginationManager.toggle());
+	}
+
+	// Page margin selector — sets the shared editor/export margin while editing
+	const marginSelect = document.getElementById('page-margin-select');
+	if (marginSelect) {
+		const currentMargin = getPageMargin();
+		marginSelect.innerHTML = MARGIN_PRESETS_MM
+			.map(mm => `<option value="${mm}"${mm === currentMargin ? ' selected' : ''}>${mm} mm</option>`)
+			.join('');
+		marginSelect.addEventListener('change', () => {
+			const mm = parseFloat(marginSelect.value) || PAGE.defaultMarginMm;
+			localStorage.setItem(PAGE_MARGIN_STORAGE_KEY, String(mm));
+			applyPageGeometry(mm);
+			paginationManager.refresh();
+		});
+	}
 }
 
 /**
